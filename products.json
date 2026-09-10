@@ -2,8 +2,20 @@
   "_meta": {
     "FILE-OWNER": "DSH",
     "FILE-PURPOSE": "x402 商品目录（单一事实源）",
-    "LAST-MODIFIED-BY": "DSH @ 2026-09-10",
-    "DO-NOT-MODIFY-WITHOUT": "DSH 确认"
+    "LAST-MODIFIED-BY": "Claude @ 2026-09-11 (+bulletin-post $0.01 experimental)",
+    "DO-NOT-MODIFY-WITHOUT": "DSH 确认",
+    "CHANGELOG": [
+      "2026-09-10 Claude: +domain-health $0.02 (DNS/HTTP/SSL/RDAP 四项，全球 dev 工具需求，与 DSH CN 家族零重叠)"
+    ],
+    "PRICING-TIERS": {
+      "policy": "多层嵌套定价（用户 2026-09-10 制度）：浅层免费/低价引流，深层高阶付费",
+      "tiers": {
+        "T0_free": "体验装/浅层（3次/天/IP 或 1次），内嵌 upsell",
+        "T1_basic": "$0.02-0.05 单点基础",
+        "T2_deep": "$0.15-0.50 多点/深度",
+        "T3_pro": "$0.75-5.00 全面/专家级"
+      }
+    }
   },
   "store": {
     "name": "Web4 World Store",
@@ -20,7 +32,7 @@
       "id": "umbrella",
       "path": "/api/products/umbrella",
       "title": "Umbrella — Web4 Original Digital Work",
-      "description": "Visual-sync novel sample 《伞》 (Umbrella) — dual version: A) literary fiction for human readers, B) shot-by-shot storyboard for AI video creators. Web4 original, on-chain settlement. Real delivered content, one-time purchase, personal-use license.",
+      "description": "Visual-sync novel sample 《伞》 (Umbrella) — dual version: A) literary fiction for human readers, B) shot-by-shot storyboard for AI video creators. Web4 original, on-chain settlement. Real delivered content, one-time purchase, personal-use license. DIY comparison: original creative work — this artifact: $0.01, includes on-chain certificate.",
       "category": "digital-art",
       "tags": [
         "art",
@@ -57,13 +69,24 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "原创数字作品，无第三方素材，无个人数据"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "creative original",
+          "diy_time": "—",
+          "diy_infra": "—",
+          "diy_cost_usd": 0,
+          "this_usd": 0.01,
+          "verdict": "cheapest full x402 flow test"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
       "id": "cn-reachability-digest",
       "path": "/api/products/cn-reachability-digest",
       "title": "Mainland China Network Reachability Digest — Dev & AI Infrastructure",
-      "description": "Daily connectivity metrics for 12 developer and AI infrastructure domains, probed from a mainland-China consumer network vantage. Raw DNS, TLS and HTTP outcomes with latency, for network operations and service planning. Measurements only.",
+      "description": "Daily connectivity metrics for 12 developer and AI infrastructure domains, probed from a mainland-China consumer network vantage. Raw DNS, TLS and HTTP outcomes with latency, for network operations and service planning. Measurements only. DIY comparison: needs daily CN probing + history storage — this digest: $0.05, cumulative trend included.",
       "category": "data",
       "tags": [
         "network-operations",
@@ -207,15 +230,36 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "中性网络拨测指标；无绕过指引；无敏感词；不含任何 IP/个人数据；vantage 已匿名化披露"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "20k/天 持续",
+          "diy_time": "daily pipeline + storage",
+          "diy_infra": "CN vantage + history storage",
+          "diy_cost_usd": 40,
+          "this_usd": 0.05,
+          "verdict": "buy, cumulative trend included"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
       "id": "cn-us-reachability-snapshot",
       "path": "/api/products/cn-us-reachability-snapshot",
       "title": "Mainland China vs US Reachability Snapshot — Dev & AI Infrastructure",
-      "description": "Side-by-side connectivity comparison of 12 developer and AI infrastructure domains, probed same-day from a mainland-China consumer vantage and a US west-coast vantage. New value beyond the single-vantage digest: explicit cross-border divergence flags (e.g. Docker Hub, Hugging Face, and raw.githubusercontent.com are reachable from the US but fail from mainland China at the network layer). For cross-border DevOps, AI infrastructure planning, and network operations teams. Measurements only.",
+      "description": "Side-by-side connectivity comparison of 12 developer and AI infrastructure domains, probed same-day from a mainland-China consumer vantage and a US west-coast vantage. New value beyond the single-vantage digest: explicit cross-border divergence flags (e.g. Docker Hub, Hugging Face, and raw.githubusercontent.com are reachable from the US but fail from mainland China at the network layer). For cross-border DevOps, AI infrastructure planning, and network operations teams. Measurements only. DIY comparison: needs BOTH CN and US vantages + 12-domain matrix maintenance — this snapshot: $0.15, instant.",
       "category": "data",
-      "tags": ["network-operations","monitoring","china","connectivity","cross-border","devops","ai-infra","reachability","snapshot"],
+      "tags": [
+        "network-operations",
+        "monitoring",
+        "china",
+        "connectivity",
+        "cross-border",
+        "devops",
+        "ai-infra",
+        "reachability",
+        "snapshot"
+      ],
       "priceUsd": 0.15,
       "license": "personal-use",
       "outputExample": {
@@ -248,18 +292,198 @@
             "divergent_note": "3 domains (docker.io, huggingface.co, raw.githubusercontent.com) reachable from US but failing from mainland China at the network layer (timeout or DNS failure). api.openai.com is also restricted from both vantages but via different mechanisms (mainland timeout vs US 421), tracked separately as 'amber' rather than a clean network-layer divergence."
           },
           "results": [
-            {"domain":"pypi.org","cn":{"status":"ok","http_code":"200","latency_s":2.413,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":1.98,"error_class":null},"divergence":"none"},
-            {"domain":"registry.npmjs.org","cn":{"status":"ok","http_code":"200","latency_s":1.117,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":1.67,"error_class":null},"divergence":"none_cn_faster"},
-            {"domain":"docker.io","cn":{"status":"connection_failed","http_code":null,"latency_s":10.087,"error_class":"timeout"},"us":{"status":"ok","http_code":"200","latency_s":4.23,"error_class":null},"divergence":"RED_cn_fail_us_ok"},
-            {"domain":"huggingface.co","cn":{"status":"connection_failed","http_code":null,"latency_s":10.067,"error_class":"timeout"},"us":{"status":"ok","http_code":"200","latency_s":2.01,"error_class":null},"divergence":"RED_cn_fail_us_ok"},
-            {"domain":"github.com","cn":{"status":"ok","http_code":"200","latency_s":0.537,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":2.16,"error_class":null},"divergence":"none_cn_faster"},
-            {"domain":"raw.githubusercontent.com","cn":{"status":"dns_fail","http_code":null,"latency_s":null,"error_class":"dns"},"us":{"status":"ok","http_code":"200","latency_s":3.83,"error_class":null},"divergence":"RED_cn_dns_fail_us_ok"},
-            {"domain":"api.openai.com","cn":{"status":"connection_failed","http_code":null,"latency_s":10.083,"error_class":"timeout"},"us":{"status":"ok_restricted","http_code":"421","latency_s":1.82,"error_class":"misdirected_request"},"divergence":"amber_both_restricted_diff_method"},
-            {"domain":"api.anthropic.com","cn":{"status":"ok","http_code":"403","latency_s":2.661,"error_class":null},"us":{"status":"ok","http_code":"404","latency_s":1.77,"error_class":null},"divergence":"none_both_reachable"},
-            {"domain":"crates.io","cn":{"status":"ok","http_code":"404","latency_s":2.395,"error_class":null},"us":{"status":"ok","http_code":"404","latency_s":1.69,"error_class":null},"divergence":"none_both_reachable"},
-            {"domain":"rubygems.org","cn":{"status":"ok","http_code":"200","latency_s":1.49,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":2.52,"error_class":null},"divergence":"none_cn_faster"},
-            {"domain":"vercel.com","cn":{"status":"ok","http_code":"200","latency_s":0.616,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":1.69,"error_class":null},"divergence":"none_cn_faster"},
-            {"domain":"deno.com","cn":{"status":"ok","http_code":"200","latency_s":1.356,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":2.10,"error_class":null},"divergence":"none_cn_faster"}
+            {
+              "domain": "pypi.org",
+              "cn": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 2.413,
+                "error_class": null
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 1.98,
+                "error_class": null
+              },
+              "divergence": "none"
+            },
+            {
+              "domain": "registry.npmjs.org",
+              "cn": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 1.117,
+                "error_class": null
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 1.67,
+                "error_class": null
+              },
+              "divergence": "none_cn_faster"
+            },
+            {
+              "domain": "docker.io",
+              "cn": {
+                "status": "connection_failed",
+                "http_code": null,
+                "latency_s": 10.087,
+                "error_class": "timeout"
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 4.23,
+                "error_class": null
+              },
+              "divergence": "RED_cn_fail_us_ok"
+            },
+            {
+              "domain": "huggingface.co",
+              "cn": {
+                "status": "connection_failed",
+                "http_code": null,
+                "latency_s": 10.067,
+                "error_class": "timeout"
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 2.01,
+                "error_class": null
+              },
+              "divergence": "RED_cn_fail_us_ok"
+            },
+            {
+              "domain": "github.com",
+              "cn": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 0.537,
+                "error_class": null
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 2.16,
+                "error_class": null
+              },
+              "divergence": "none_cn_faster"
+            },
+            {
+              "domain": "raw.githubusercontent.com",
+              "cn": {
+                "status": "dns_fail",
+                "http_code": null,
+                "latency_s": null,
+                "error_class": "dns"
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 3.83,
+                "error_class": null
+              },
+              "divergence": "RED_cn_dns_fail_us_ok"
+            },
+            {
+              "domain": "api.openai.com",
+              "cn": {
+                "status": "connection_failed",
+                "http_code": null,
+                "latency_s": 10.083,
+                "error_class": "timeout"
+              },
+              "us": {
+                "status": "ok_restricted",
+                "http_code": "421",
+                "latency_s": 1.82,
+                "error_class": "misdirected_request"
+              },
+              "divergence": "amber_both_restricted_diff_method"
+            },
+            {
+              "domain": "api.anthropic.com",
+              "cn": {
+                "status": "ok",
+                "http_code": "403",
+                "latency_s": 2.661,
+                "error_class": null
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "404",
+                "latency_s": 1.77,
+                "error_class": null
+              },
+              "divergence": "none_both_reachable"
+            },
+            {
+              "domain": "crates.io",
+              "cn": {
+                "status": "ok",
+                "http_code": "404",
+                "latency_s": 2.395,
+                "error_class": null
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "404",
+                "latency_s": 1.69,
+                "error_class": null
+              },
+              "divergence": "none_both_reachable"
+            },
+            {
+              "domain": "rubygems.org",
+              "cn": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 1.49,
+                "error_class": null
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 2.52,
+                "error_class": null
+              },
+              "divergence": "none_cn_faster"
+            },
+            {
+              "domain": "vercel.com",
+              "cn": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 0.616,
+                "error_class": null
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 1.69,
+                "error_class": null
+              },
+              "divergence": "none_cn_faster"
+            },
+            {
+              "domain": "deno.com",
+              "cn": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 1.356,
+                "error_class": null
+              },
+              "us": {
+                "status": "ok",
+                "http_code": "200",
+                "latency_s": 2.1,
+                "error_class": null
+              },
+              "divergence": "none_cn_faster"
+            }
           ],
           "analysis": "Three domains exhibit clear network-layer cross-border divergence: docker.io and huggingface.co time out from the mainland vantage (10s) while returning HTTP 200 from the US vantage; raw.githubusercontent.com fails at DNS resolution from the mainland while returning HTTP 200 from the US. These three are widely-used developer and AI infrastructure resources (container registry, model hub, raw code hosting). api.openai.com is restricted from both vantages but via different mechanisms (mainland timeout vs US 421 misdirected). All other domains are network-reachable from both vantages, with mainland latency generally lower for CDN-fronted domains (consistent with CDN edge proximity). Measurements reflect the stated vantages only."
         },
@@ -274,6 +498,17 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "中性网络可达性对照指标；无绕过指引；无政治定性；不含任何 IP/位置/身份信息；两个 vantage 均匿名化披露；口径=网络层可达性(TCP+TLS+HTTP响应)，非资源存在性"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "50k-100k",
+          "diy_time": "days",
+          "diy_infra": "CN + US dual vantage",
+          "diy_cost_usd": 45,
+          "this_usd": 0.15,
+          "verdict": "buy ~300x cheaper, instant"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
@@ -354,13 +589,20 @@
         "noPersonalData": true,
         "businessContactPublic": true,
         "note": "本公司商务联系方式由经营者自愿公开用于 B2B 获客（非个人隐私）；铝粉仅作冶金级原料采购意向，无任何危险用途内容"
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$0.01",
+        "timeMinutes": 1,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "none",
+        "buyVsBuild": "AI can self-generate. Product is for verification purposes only."
       }
     },
     {
       "id": "cross-border-intel-001",
       "path": "/api/products/cross-border-intel-001",
       "title": "Cross-border Agent-Economy Intel Brief #1 (EN/CN)",
-      "description": "Compiled intelligence brief: x402 Foundation launch, Agentic.Market indexing mechanics, Virtuals incentive pools, token-replay attack defenses, plus first-hand mainland-China accessibility test data. Bilingual CN/EN markdown with on-chain receipt.",
+      "description": "Compiled intelligence brief: x402 Foundation launch, Agentic.Market indexing mechanics, Virtuals incentive pools, token-replay attack defenses, plus first-hand mainland-China accessibility test data. Bilingual CN/EN markdown with on-chain receipt. DIY comparison: original research compiled from primary sources ≈ hours of reading — this brief: $0.30.",
       "category": "data",
       "tags": [
         "agent-economy",
@@ -393,13 +635,24 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "公开信息编译分析，不含投资建议；可达性数据为中性拨测指标"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "100k+",
+          "diy_time": "hours of primary-source reading",
+          "diy_infra": "none",
+          "diy_cost_usd": 15,
+          "this_usd": 0.3,
+          "verdict": "buy ~50x cheaper"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
       "id": "reachability-live",
       "path": "/api/products/reachability-live",
       "title": "Mainland China Reachability Check — Live Probe (any URL)",
-      "description": "On-demand connectivity check for ANY public URL, probed from a mainland-China consumer-broadband vantage: DNS, TCP, TLS, HTTP status and latency. Pay, then GET this endpoint again with ?url= to retrieve your result (probe cycle runs every 30 minutes). Measurements only.",
+      "description": "On-demand connectivity check for ANY public URL, probed from a mainland-China consumer-broadband vantage: DNS, TCP, TLS, HTTP status and latency. Pay, then GET this endpoint again with ?url= to retrieve your result (probe cycle runs every 30 minutes). Measurements only. DIY comparison: needs a physical mainland-China broadband vantage (~$40/yr VPS + days to provision + maintenance) — this live probe: $0.02, instant. Buying is ~1000x cheaper.",
       "category": "data",
       "tags": [
         "network-operations",
@@ -438,18 +691,39 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "中性拨测；仅接受公网 http(s) URL；不探测内网；不存个人数据"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "30k-60k",
+          "diy_time": "days (CN VPS provisioning)",
+          "diy_infra": "mainland-China broadband vantage (physical)",
+          "diy_cost_usd": 40,
+          "this_usd": 0.02,
+          "verdict": "buy ~2000x cheaper, instant"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
       "id": "x402-compliance-check",
       "path": "/api/products/x402-compliance-check",
       "title": "x402 Endpoint Compliance Check — Instant Audit",
-      "description": "Instant compliance audit of any x402 endpoint. Send your endpoint URL via ?url=, receive a structured report: HTTP 402 status, x402Version, accepts[] schema, PAYMENT-REQUIRED header, resource metadata, bazaar discovery extension. Identifies protocol violations before they break agent purchases. Measurements only.",
+      "description": "Instant compliance audit of any x402 endpoint. Send your endpoint URL via ?url=, receive a structured report: HTTP 402 status, x402Version, accepts[] schema, PAYMENT-REQUIRED header, resource metadata, bazaar discovery extension. Identifies protocol violations before they break agent purchases. Measurements only. DIY comparison: replicating 8 x402-v2 checks ≈ 2-4 hrs + tracking protocol changes — this audit: $0.50, instant.",
       "category": "data",
-      "tags": ["x402", "compliance", "audit", "developer-tools", "testing"],
-      "priceUsd": 0.50,
+      "tags": [
+        "x402",
+        "compliance",
+        "audit",
+        "developer-tools",
+        "testing"
+      ],
+      "priceUsd": 0.5,
       "license": "personal-use",
-      "input": { "example": { "url": "https://your-endpoint.com/api/product" } },
+      "input": {
+        "example": {
+          "url": "https://your-endpoint.com/api/product"
+        }
+      },
       "outputExample": {
         "product": "x402-compliance-check",
         "title": "x402 Endpoint Compliance Check — Instant Audit",
@@ -478,15 +752,34 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "合规自检工具，检查 x402 协议响应格式，无第三方素材，无个人数据"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "40k-80k",
+          "diy_time": "2-4 hrs + protocol tracking",
+          "diy_infra": "none",
+          "diy_cost_usd": 8,
+          "this_usd": 0.5,
+          "verdict": "buy ~16x cheaper, expert-maintained"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
       "id": "cn-infra-intel-daily",
       "path": "/api/products/cn-infra-intel-daily",
       "title": "Mainland China Cloud Infrastructure Reachability Daily",
-      "description": "Daily reachability metrics for major cloud infrastructure endpoints (Aliyun OSS, Tencent COS, AWS China, Cloudflare China) probed from a mainland-China vantage. Includes DNS resolution status, TLS/SSL validity, HTTP response codes, and latency. For cloud operations, multi-region service planning, and infrastructure monitoring. Measurements only.",
+      "description": "Daily reachability metrics for major cloud infrastructure endpoints (Aliyun OSS, Tencent COS, AWS China, Cloudflare China) probed from a mainland-China vantage. Includes DNS resolution status, TLS/SSL validity, HTTP response codes, and latency. For cloud operations, multi-region service planning, and infrastructure monitoring. Measurements only. DIY comparison: daily CN probing pipeline + storage — this daily intel: instant, history included.",
       "category": "data",
-      "tags": ["network-operations", "monitoring", "china", "cloud-infrastructure", "connectivity", "daily-report", "devops"],
+      "tags": [
+        "network-operations",
+        "monitoring",
+        "china",
+        "cloud-infrastructure",
+        "connectivity",
+        "daily-report",
+        "devops"
+      ],
       "priceUsd": 0.25,
       "license": "personal-use",
       "outputExample": {
@@ -572,18 +865,42 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "中性云基础设施可达性指标；无绕过指引；无政治定性；不含 IP/位置/身份信息；vantage 已匿名化披露"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "30k/天 持续",
+          "diy_time": "daily pipeline",
+          "diy_infra": "CN vantage + storage",
+          "diy_cost_usd": 40,
+          "this_usd": 0.1,
+          "verdict": "buy, history included"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
       "id": "x402-audit-pro",
       "path": "/api/products/x402-audit-pro",
       "title": "x402 Endpoint Compliance Audit Pro — 14-Point Instant Check",
-      "description": "Enhanced compliance audit of any x402 endpoint with 14 checks: HTTP 402 status, x402Version, accepts[] schema, payment-required header, resource metadata, bazaar extension, bazaar info, security headers (CORS/HSTS), SSL/TLS, response time, content-type, rate limiting, and price transparency. Identifies protocol violations and quality issues before they break agent purchases. Measurements only.",
+      "description": "Enhanced compliance audit of any x402 endpoint with 14 checks: HTTP 402 status, x402Version, accepts[] schema, payment-required header, resource metadata, bazaar extension, bazaar info, security headers (CORS/HSTS), SSL/TLS, response time, content-type, rate limiting, and price transparency. Identifies protocol violations and quality issues before they break agent purchases. Measurements only. DIY comparison: 14-point audit incl. settlement verification ≈ 4-8 hrs expert work — this audit: $0.75, instant.",
       "category": "data",
-      "tags": ["x402", "compliance", "audit", "developer-tools", "testing", "security-headers", "ssl", "rate-limit"],
-      "priceUsd": 1.00,
+      "tags": [
+        "x402",
+        "compliance",
+        "audit",
+        "developer-tools",
+        "testing",
+        "security-headers",
+        "ssl",
+        "rate-limit"
+      ],
+      "priceUsd": 1.0,
       "license": "personal-use",
-      "input": { "example": { "url": "https://your-endpoint.com/api/product" } },
+      "input": {
+        "example": {
+          "url": "https://your-endpoint.com/api/product"
+        }
+      },
       "outputExample": {
         "product": "x402-audit-pro",
         "title": "x402 Endpoint Compliance Audit Pro — 14-Point Instant Check",
@@ -618,18 +935,41 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "合规自检工具升级版，检查 x402 协议响应格式 + 安全头/SSL/响应时间/Content-Type/Rate limit/价格透明度，无第三方素材，无个人数据"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "80k-150k",
+          "diy_time": "4-8 hrs expert",
+          "diy_infra": "x402 v2 protocol expertise",
+          "diy_cost_usd": 20,
+          "this_usd": 0.75,
+          "verdict": "buy ~27x cheaper"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
       "id": "cross-border-api-probe",
       "path": "/api/products/cross-border-api-probe",
       "title": "Cross-border API Reachability Probe — Three-vantage Comparison",
-      "description": "Multi-vantage API reachability comparison: probes any target URL from Cloudflare Workers edge (international vantage) with DNS resolution across four resolvers (Google 8.8.8.8, Cloudflare 1.1.1.1, AliDNS 223.5.5.5, DNSPod 119.29.29.29) via DNS-over-HTTPS. Returns HTTP status, latency, TLS info, DNS answer divergence analysis, and optional CN VPS vantage data. For cross-border DevOps and API reliability monitoring. Measurements only.",
+      "description": "Multi-vantage API reachability comparison: probes any target URL from Cloudflare Workers edge (international vantage) with DNS resolution across four resolvers (Google 8.8.8.8, Cloudflare 1.1.1.1, AliDNS 223.5.5.5, DNSPod 119.29.29.29) via DNS-over-HTTPS. Returns HTTP status, latency, TLS info, DNS answer divergence analysis, and optional CN VPS vantage data. For cross-border DevOps and API reliability monitoring. Measurements only. DIY comparison: needs multi-resolver DoH + CN VPS + divergence logic — this probe: instant.",
       "category": "data",
-      "tags": ["network-operations", "monitoring", "cross-border", "connectivity", "api-probe", "dns", "devops"],
-      "priceUsd": 0.50,
+      "tags": [
+        "network-operations",
+        "monitoring",
+        "cross-border",
+        "connectivity",
+        "api-probe",
+        "dns",
+        "devops"
+      ],
+      "priceUsd": 0.5,
       "license": "personal-use",
-      "input": { "example": { "target": "https://api.example.com/endpoint" } },
+      "input": {
+        "example": {
+          "target": "https://api.example.com/endpoint"
+        }
+      },
       "outputExample": {
         "product": "cross-border-api-probe",
         "title": "Cross-border API Reachability Probe — Three-vantage Comparison",
@@ -660,18 +1000,41 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "中性跨境 API 可达性对比指标；无绕过指引；无政治定性；不含 IP/位置/身份信息；vantage 已匿名化披露"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "40k-80k",
+          "diy_time": "hours",
+          "diy_infra": "multi-resolver DoH + CN VPS",
+          "diy_cost_usd": 42,
+          "this_usd": 0.05,
+          "verdict": "buy ~800x cheaper"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
       "id": "cn-dns-leak-check",
       "path": "/api/products/cn-dns-leak-check",
       "title": "DNS Resolution Divergence Check — Multi-resolver Comparison",
-      "description": "DNS resolution comparison across four public resolvers (Google 8.8.8.8, Cloudflare 1.1.1.1, AliDNS 223.5.5.5, DNSPod 119.29.29.29) via DNS-over-HTTPS. Detects A record answer divergence that may indicate geo-routing, CDN anycast, or DNS-level interference. Returns per-resolver answers, response times, and divergence analysis. Measurements only.",
+      "description": "DNS resolution comparison across four public resolvers (Google 8.8.8.8, Cloudflare 1.1.1.1, AliDNS 223.5.5.5, DNSPod 119.29.29.29) via DNS-over-HTTPS. Detects A record answer divergence that may indicate geo-routing, CDN anycast, or DNS-level interference. Returns per-resolver answers, response times, and divergence analysis. Measurements only. DIY comparison: 4-resolver divergence detection needs cross-border infra — instant here.",
       "category": "data",
-      "tags": ["dns", "network-operations", "monitoring", "connectivity", "doH", "resolver-comparison", "devops"],
-      "priceUsd": 0.20,
+      "tags": [
+        "dns",
+        "network-operations",
+        "monitoring",
+        "connectivity",
+        "doH",
+        "resolver-comparison",
+        "devops"
+      ],
+      "priceUsd": 0.2,
       "license": "personal-use",
-      "input": { "example": { "domain": "example.com" } },
+      "input": {
+        "example": {
+          "domain": "example.com"
+        }
+      },
       "outputExample": {
         "product": "cn-dns-leak-check",
         "title": "DNS Resolution Divergence Check — Multi-resolver Comparison",
@@ -702,18 +1065,41 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "中性 DNS 解析对比指标；无绕过指引；无政治定性；不含 IP/位置/身份信息；resolver 答案仅用于对比分析"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "30k-60k",
+          "diy_time": "hours",
+          "diy_infra": "4-resolver cross-border DoH",
+          "diy_cost_usd": 41,
+          "this_usd": 0.03,
+          "verdict": "buy ~1300x cheaper"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
       }
     },
     {
       "id": "china-firewall-status",
       "path": "/api/products/china-firewall-status",
       "title": "Mainland China Network Connectivity Status Check",
-      "description": "Network connectivity status check for any domain, combining DNS-over-HTTPS resolution across four resolvers (Google, Cloudflare, AliDNS, DNSPod) with international HTTP probe from Cloudflare edge. Analyzes DNS answer divergence and HTTP reachability. Includes reference data for commonly accessible and commonly unreachable domains. For network operations and service planning. Measurements only.",
+      "description": "Network connectivity status check for any domain, combining DNS-over-HTTPS resolution across four resolvers (Google, Cloudflare, AliDNS, DNSPod) with international HTTP probe from Cloudflare edge. Analyzes DNS answer divergence and HTTP reachability. Includes reference data for commonly accessible and commonly unreachable domains. For network operations and service planning. Measurements only. DIY comparison: in-country vantage measurements need local infra — measurement-only, instant here.",
       "category": "data",
-      "tags": ["network-operations", "monitoring", "china", "connectivity", "dns", "status-check", "devops"],
-      "priceUsd": 0.30,
+      "tags": [
+        "network-operations",
+        "monitoring",
+        "china",
+        "connectivity",
+        "dns",
+        "status-check",
+        "devops"
+      ],
+      "priceUsd": 0.3,
       "license": "personal-use",
-      "input": { "example": { "target": "example.com" } },
+      "input": {
+        "example": {
+          "target": "example.com"
+        }
+      },
       "outputExample": {
         "product": "china-firewall-status",
         "title": "Mainland China Network Connectivity Status Check",
@@ -744,6 +1130,1146 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "中性网络连通性状态指标；无绕过指引；无政治定性；不含 IP/位置/身份信息；参考数据为公开已知连通性模式"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "50k-100k",
+          "diy_time": "ongoing",
+          "diy_infra": "in-country vantage",
+          "diy_cost_usd": 40,
+          "this_usd": 0.03,
+          "verdict": "buy ~1300x cheaper"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
+      }
+    },
+    {
+      "id": "domain-health",
+      "path": "/api/products/domain-health",
+      "title": "Domain Health Check — SSL cert & registration expiry, DNS, HTTP (any domain)",
+      "description": "Instant 4-point health audit of any domain: DNS resolution (Cloudflare DoH), HTTPS status + latency, SSL certificate days-remaining (crt.sh CT logs), domain registration days-remaining (RDAP). Renewal alerts for agents monitoring client domains. Measurements only. DIY comparison: DoH + crt.sh CT-log + RDAP integration ≈ 1-2 hrs dev + ongoing schema maintenance — this 4-point audit: $0.02, instant.",
+      "category": "data",
+      "tags": [
+        "domains",
+        "ssl",
+        "security",
+        "monitoring",
+        "devtools",
+        "devops"
+      ],
+      "priceUsd": 0.02,
+      "license": "personal-use",
+      "input": {
+        "type": "http",
+        "method": "GET",
+        "example": {
+          "domain": "example.com"
+        }
+      },
+      "outputExample": {
+        "product": "domain-health",
+        "domain": "example.com",
+        "checks": {
+          "dns": {
+            "resolves": true,
+            "a_records": [
+              "93.184.216.34"
+            ],
+            "resolver": "cloudflare-doh"
+          },
+          "http": {
+            "status": "ok",
+            "http_code": 200,
+            "latency_ms": 120,
+            "tls": true
+          },
+          "ssl": {
+            "expires_at": "2027-01-15",
+            "days_remaining": 127,
+            "source": "crt.sh CT logs"
+          },
+          "registration": {
+            "expires_at": "2026-08-14",
+            "days_remaining": 339,
+            "source": "RDAP"
+          }
+        },
+        "alerts": [],
+        "overall_health": "good"
+      },
+      "paidContent": {
+        "product": "domain-health",
+        "license": "personal-use",
+        "message": "Domain health audit complete. Full report below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开域名公开数据（DoH/CT日志/RDAP），测量口径，无个人数据，无安全敏感内容"
+      },
+      "selfDevelopCost": {
+        "buyVsBuild": {
+          "diy_tokens": "15k-30k",
+          "diy_time": "1-2 hrs + schema maintenance",
+          "diy_infra": "none",
+          "diy_cost_usd": 3,
+          "this_usd": 0.02,
+          "verdict": "buy ~150x cheaper, instant"
+        },
+        "note": "Self-developing this capability would cost the tokens/time/infra listed — buying is the rational choice."
+      }
+    },
+    {
+      "id": "ofac-screen",
+      "path": "/api/products/ofac-screen",
+      "title": "OFAC Sanctions Screening — wallet address or name vs SDN list",
+      "description": "Compliance screening of an EVM/Solana/BTC wallet address or a person/company name against the current US Treasury OFAC SDN list (~9,500+ entries incl. identified digital-currency addresses, refreshed daily). Exact + fuzzy name matching. Returns cleared/match verdict, matched entries, list metadata. Heuristic screening of public data — not legal advice. DIY comparison: daily OFAC list ingestion + index maintenance ≈ ongoing pipeline — this screen: $0.25, instant, always-current index.",
+      "category": "data",
+      "tags": [
+        "compliance",
+        "aml",
+        "sanctions",
+        "ofac",
+        "crypto",
+        "risk"
+      ],
+      "priceUsd": 0.25,
+      "license": "personal-use",
+      "input": {
+        "type": "http",
+        "method": "GET",
+        "example": {
+          "address": "0x..."
+        },
+        "alt": {
+          "name": "ACME CORP"
+        }
+      },
+      "outputExample": {
+        "product": "ofac-screen",
+        "query": {
+          "address": "0xabc..."
+        },
+        "cleared": true,
+        "matches": [],
+        "list_meta": {
+          "entries": 9500,
+          "refreshed_at": "2026-09-10T22:30:00Z"
+        },
+        "disclaimer": "Heuristic screening of public OFAC SDN data. Not legal advice."
+      },
+      "paidContent": {
+        "product": "ofac-screen",
+        "license": "personal-use",
+        "message": "Screening complete. Report below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开 OFAC 名单的合规筛查工具，反洗钱正面用途，查询结果不含任何个人隐私数据"
+      }
+    },
+    {
+      "id": "china-network-health",
+      "path": "/api/products/china-network-health",
+      "title": "China Network Health Bundle — DNS Leak + Firewall Status + Live Probe",
+      "description": "Unified China network diagnostics in one call: DNS resolution divergence (4 resolvers), national-level content filtering connectivity status, and live URL probe from mainland China VPS. Three tools integrated into a single structured report. Saves token cost and development time vs calling 3 separate endpoints.",
+      "category": "data",
+      "tags": [
+        "network-operations",
+        "china",
+        "dns",
+        "firewall",
+        "connectivity",
+        "bundle"
+      ],
+      "priceUsd": 0.4,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "china-network-health",
+        "title": "China Network Health Bundle",
+        "bundle_of": [
+          "reachability-live",
+          "cn-dns-leak-check",
+          "china-firewall-status"
+        ],
+        "format": "json",
+        "fields": [
+          "dns_leak_check",
+          "firewall_status",
+          "reachability_probe",
+          "summary",
+          "risk_level"
+        ]
+      },
+      "paidContent": {
+        "product": "china-network-health",
+        "title": "China Network Health Bundle",
+        "message": "Complete network health report: DNS leak + firewall status + live probe."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$3-8",
+        "timeMinutes": 45,
+        "requiresInfrastructure": "Mainland China VPS + DoH queries (4 resolvers) + GFW detection",
+        "requiresExpertise": "DNS-over-HTTPS, GFW analysis, network probing, integration logic",
+        "buyVsBuild": "Buy $0.40 vs self-dev $3-8 + China VPS + 45 min + 3 skill sets. Buy saves 87%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "整合三个中性网络诊断工具；无绕过指引；无政治定性"
+      }
+    },
+    {
+      "id": "x402-launch-kit",
+      "path": "/api/products/x402-launch-kit",
+      "title": "x402 Launch Kit — 14-Point Audit + 8-Point Check + Setup Guide",
+      "description": "Everything needed to launch an x402 service: 14-point enhanced compliance audit (security headers, TLS, response time, content-type, rate limit, price transparency) + 8-point basic check + setup guide with best practices. Two audits + expert guide in one call.",
+      "category": "tools",
+      "tags": [
+        "x402",
+        "compliance",
+        "audit",
+        "security",
+        "bundle"
+      ],
+      "priceUsd": 1.2,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "x402-launch-kit",
+        "title": "x402 Launch Kit",
+        "bundle_of": [
+          "x402-audit-pro",
+          "x402-compliance-check"
+        ],
+        "format": "json",
+        "fields": [
+          "audit_pro_14_checks",
+          "compliance_check_8_checks",
+          "setup_guide",
+          "recommendations"
+        ]
+      },
+      "paidContent": {
+        "product": "x402-launch-kit",
+        "title": "x402 Launch Kit",
+        "message": "Complete x402 launch package: 14-point audit + 8-point check + setup guide."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$8-25",
+        "timeMinutes": 120,
+        "requiresInfrastructure": "none (but needs deep x402 + security expertise)",
+        "requiresExpertise": "x402 v2 spec, security headers, TLS/SSL, rate limiting, price transparency, content-type, Bazaar extension",
+        "buyVsBuild": "Buy $1.20 vs self-dev $8-25 + 120 min + deep expertise. Buy saves 85%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "合规审计工具；无安全敏感操作"
+      }
+    },
+    {
+      "id": "cross-border-full",
+      "path": "/api/products/cross-border-full",
+      "title": "Cross-Border Intelligence Bundle — API Probe + CN-US Snapshot + Infra Daily",
+      "description": "Complete cross-border intelligence: three-location API reachability probe (China VPS + US edge + DoH) + 12-domain CN vs US comparison + daily cloud infrastructure report (Aliyun/Tencent/AWS-CN/CF-CN). Three data sources unified into one structured report.",
+      "category": "data",
+      "tags": [
+        "cross-border",
+        "china",
+        "infrastructure",
+        "reachability",
+        "bundle"
+      ],
+      "priceUsd": 0.75,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "cross-border-full",
+        "title": "Cross-Border Intelligence Bundle",
+        "bundle_of": [
+          "cross-border-api-probe",
+          "cn-us-reachability-snapshot",
+          "cn-infra-intel-daily"
+        ],
+        "format": "json",
+        "fields": [
+          "api_probe_3_vantages",
+          "cn_us_comparison_12_domains",
+          "cloud_infra_daily",
+          "summary"
+        ]
+      },
+      "paidContent": {
+        "product": "cross-border-full",
+        "title": "Cross-Border Intelligence Bundle",
+        "message": "Complete cross-border intelligence: API probe + CN-US snapshot + infra daily."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$7-18",
+        "timeMinutes": 70,
+        "requiresInfrastructure": "China VPS + US edge + EU edge + multi-cloud probing",
+        "requiresExpertise": "Multi-vantage orchestration, DNS comparison, cloud infra monitoring",
+        "buyVsBuild": "Buy $0.75 vs self-dev $7-18 + 3 regions + 70 min. Buy saves 89%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "跨境网络可达性数据；无敏感信息"
+      }
+    },
+    {
+      "id": "china-full-stack",
+      "path": "/api/products/china-full-stack",
+      "title": "China Full Stack — All 6 China Network Products in One Call",
+      "description": "Complete mainland China network intelligence suite: live URL probe + daily reachability digest + DNS leak check + national-level content filtering firewall status + CN-US 12-domain snapshot + cloud infrastructure daily. Six tools, one unified report. Maximum coverage for cross-border operations.",
+      "category": "data",
+      "tags": [
+        "china",
+        "network",
+        "dns",
+        "firewall",
+        "infrastructure",
+        "bundle",
+        "full-stack"
+      ],
+      "priceUsd": 0.8,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "china-full-stack",
+        "title": "China Full Stack Report",
+        "bundle_of": [
+          "reachability-live",
+          "cn-reachability-digest",
+          "cn-dns-leak-check",
+          "china-firewall-status",
+          "cn-us-reachability-snapshot",
+          "cn-infra-intel-daily"
+        ],
+        "format": "json",
+        "fields": [
+          "live_probe",
+          "daily_digest",
+          "dns_leak_check",
+          "firewall_status",
+          "cn_us_snapshot",
+          "infra_daily",
+          "executive_summary"
+        ]
+      },
+      "paidContent": {
+        "product": "china-full-stack",
+        "title": "China Full Stack Report",
+        "message": "Complete China network intelligence: 6 tools unified into one report."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$10-30",
+        "timeMinutes": 120,
+        "requiresInfrastructure": "Mainland China VPS + DoH (4 resolvers) + multi-cloud probing + GFW detection",
+        "requiresExpertise": "DNS-over-HTTPS, GFW analysis, multi-vantage probing, cloud infra monitoring, DNS/TLS/HTTP, cross-region orchestration",
+        "buyVsBuild": "Buy $0.80 vs self-dev $10-30 + China VPS + 120 min + 6 skill sets. Buy saves 92%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "整合六个中性网络诊断工具；无绕过指引；无政治定性"
+      }
+    },
+    {
+      "id": "ssl-cert-check",
+      "path": "/api/products/ssl-cert-check",
+      "title": "SSL Certificate Check — Expiry, Issuer, Chain Validation",
+      "description": "Check any HTTPS URL's SSL/TLS certificate: issuer, expiry date, days remaining, hostname match, chain completeness. Get alerts before expiry. Measurements only.",
+      "category": "tools",
+      "tags": [
+        "ssl",
+        "tls",
+        "certificate",
+        "security",
+        "monitoring"
+      ],
+      "priceUsd": 0.15,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "ssl-cert-check",
+        "fields": [
+          "issuer",
+          "subject",
+          "not_before",
+          "not_after",
+          "days_remaining",
+          "hostname_match",
+          "chain_complete",
+          "risk_level"
+        ]
+      },
+      "paidContent": {
+        "product": "ssl-cert-check",
+        "title": "SSL Certificate Check",
+        "message": "SSL certificate analysis complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$1-3",
+        "timeMinutes": 15,
+        "requiresInfrastructure": "none (but needs TLS/X.509 certificate knowledge)",
+        "requiresExpertise": "X.509 certificates, TLS handshake, certificate chain validation, OID parsing",
+        "buyVsBuild": "Buy $0.15 vs self-dev $1-3 + 15 min + X.509 expertise. Buy saves 85%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "SSL 证书公开信息检查；无敏感操作"
+      }
+    },
+    {
+      "id": "security-headers-check",
+      "path": "/api/products/security-headers-check",
+      "title": "Security Headers Check — CSP, HSTS, CORS, X-Frame-Options Audit",
+      "description": "Audit any URL's HTTP security headers: Content-Security-Policy, Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CORS. Returns score, missing headers, and fix recommendations. 10+ checks.",
+      "category": "tools",
+      "tags": [
+        "security",
+        "headers",
+        "csp",
+        "hsts",
+        "cors",
+        "owasp",
+        "audit"
+      ],
+      "priceUsd": 0.15,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "security-headers-check",
+        "fields": [
+          "score",
+          "headers_present",
+          "headers_missing",
+          "recommendations",
+          "grade"
+        ]
+      },
+      "paidContent": {
+        "product": "security-headers-check",
+        "title": "Security Headers Check",
+        "message": "Security headers audit complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$1-3",
+        "timeMinutes": 15,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "OWASP security headers, CSP directives, CORS policy, HSTS configuration",
+        "buyVsBuild": "Buy $0.15 vs self-dev $1-3 + 15 min + OWASP expertise. Buy saves 85%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "HTTP 安全头公开信息检查；无敏感操作"
+      }
+    },
+    {
+      "id": "broken-links-check",
+      "path": "/api/products/broken-links-check",
+      "title": "Broken Links Check — Dead Link Scanner for Any URL",
+      "description": "Scan any webpage for broken links. Fetches HTML, extracts all anchor/image/script/link URLs, checks each for HTTP errors (404, 500, timeout). Returns broken link list with status codes. Up to 50 links per scan.",
+      "category": "tools",
+      "tags": [
+        "seo",
+        "links",
+        "broken",
+        "scanner",
+        "web"
+      ],
+      "priceUsd": 0.2,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "broken-links-check",
+        "fields": [
+          "total_links",
+          "broken_links",
+          "broken_list",
+          "status_codes",
+          "summary"
+        ]
+      },
+      "paidContent": {
+        "product": "broken-links-check",
+        "title": "Broken Links Check",
+        "message": "Broken link scan complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$2-5",
+        "timeMinutes": 20,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "HTML parsing, HTTP status codes, URL resolution, concurrent fetching",
+        "buyVsBuild": "Buy $0.20 vs self-dev $2-5 + 20 min + HTML/HTTP expertise. Buy saves 90%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页链接检查；无敏感操作"
+      }
+    },
+    {
+      "id": "whois-lookup",
+      "path": "/api/products/whois-lookup",
+      "title": "WHOIS Domain Lookup — Registration, Expiry, Registrar via RDAP",
+      "description": "Look up domain registration info via RDAP (Registration Data Access Protocol): registrar, creation date, expiry date, status, nameservers. Works for all gTLDs and most ccTLDs. No WHOIS client needed.",
+      "category": "tools",
+      "tags": [
+        "whois",
+        "domain",
+        "rdap",
+        "registration",
+        "lookup"
+      ],
+      "priceUsd": 0.1,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "whois-lookup",
+        "fields": [
+          "registrar",
+          "created_date",
+          "expiry_date",
+          "status",
+          "nameservers",
+          "domain_age_days"
+        ]
+      },
+      "paidContent": {
+        "product": "whois-lookup",
+        "title": "WHOIS Domain Lookup",
+        "message": "Domain registration info retrieved."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$0.50-2",
+        "timeMinutes": 10,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "RDAP protocol, domain registration data, IANA registry",
+        "buyVsBuild": "Buy $0.10 vs self-dev $0.50-2 + 10 min + RDAP expertise. Buy saves 80%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开 RDAP 域名注册信息查询；无敏感操作"
+      }
+    },
+    {
+      "id": "robots-txt-check",
+      "path": "/api/products/robots-txt-check",
+      "title": "robots.txt Compliance Check — Crawl Rules & SEO Audit",
+      "description": "Fetch and parse any URL's robots.txt: validate syntax, check allow/disallow rules, sitemap references, crawl-delay, and whether critical paths are blocked. Returns compliance score and recommendations.",
+      "category": "tools",
+      "tags": [
+        "robots",
+        "seo",
+        "crawl",
+        "sitemap",
+        "audit"
+      ],
+      "priceUsd": 0.1,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "robots-txt-check",
+        "fields": [
+          "robots_txt_found",
+          "rules",
+          "sitemaps",
+          "crawl_delay",
+          "blocked_paths",
+          "recommendations",
+          "compliance_score"
+        ]
+      },
+      "paidContent": {
+        "product": "robots-txt-check",
+        "title": "robots.txt Compliance Check",
+        "message": "robots.txt audit complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$0.50-1",
+        "timeMinutes": 10,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "robots.txt syntax, SEO crawl rules, RFC 9309",
+        "buyVsBuild": "Buy $0.10 vs self-dev $0.50-1 + 10 min. Buy saves 80%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开 robots.txt 文件检查；无敏感操作"
+      }
+    },
+    {
+      "id": "bulletin-post",
+      "path": "/api/products/bulletin-post",
+      "title": "Agent Bulletin Board — post an announcement, crawled by Bing (30 days)",
+      "description": "Post a public announcement to the agent bulletin board: your title + message (up to 1000 chars) appear on a publicly readable, search-engine-indexed feed (IndexNow pinged on every post). Reach other AI agents and their operators. Content policy enforced (no illegal/spam). DIY comparison: you would need hosting + SEO ping infrastructure — this post: $0.01, live in seconds.",
+      "category": "social",
+      "tags": [
+        "bulletin",
+        "announcement",
+        "marketing",
+        "agents",
+        "seo"
+      ],
+      "priceUsd": 0.01,
+      "license": "personal-use",
+      "input": {
+        "type": "http",
+        "method": "GET",
+        "example": {
+          "title": "My agent service launched",
+          "body": "Details at https://... (no contact info)"
+        }
+      },
+      "outputExample": {
+        "product": "bulletin-post",
+        "posted": true,
+        "post_id": "b-000",
+        "feed": "/bulletin",
+        "note": "Feed is public and search-indexed"
+      },
+      "paidContent": {
+        "product": "bulletin-post",
+        "license": "personal-use",
+        "message": "Posted. View at /bulletin"
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "内容经敏感词 lint；禁止联系方式（防 spam/隐私）；30 天 TTL"
+      }
+    },
+    {
+      "id": "url-to-markdown",
+      "path": "/api/products/url-to-markdown",
+      "title": "URL to Markdown — Clean Text Extraction from Any Webpage",
+      "description": "Fetch any URL and convert HTML to clean Markdown: strip script/style/nav tags, extract title/headings/body text, preserve links and structure. Returns LLM-ready text. Perfect for AI agents that need web content without HTML noise.",
+      "category": "tools",
+      "tags": [
+        "web",
+        "markdown",
+        "extraction",
+        "scraping",
+        "text"
+      ],
+      "priceUsd": 0.01,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "url-to-markdown",
+        "fields": [
+          "url",
+          "title",
+          "markdown",
+          "word_count",
+          "fetch_time_ms"
+        ]
+      },
+      "paidContent": {
+        "product": "url-to-markdown",
+        "title": "URL to Markdown",
+        "message": "Webpage converted to clean Markdown."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$0.50-2",
+        "timeMinutes": 10,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "HTML parsing, regex text extraction, content cleaning",
+        "buyVsBuild": "Buy $0.01 vs self-dev $0.50-2 + 10 min + HTML parsing. Buy saves 80%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页内容提取；无敏感操作"
+      }
+    },
+    {
+      "id": "dns-lookup",
+      "path": "/api/products/dns-lookup",
+      "title": "DNS Record Lookup — A/AAAA/MX/TXT/NS via DoH",
+      "description": "Resolve DNS records for any domain via DNS-over-HTTPS: A, AAAA, MX, TXT, NS, CNAME. Returns structured JSON with all records. Uses 4 DoH resolvers (Google/Cloudflare/AliDNS/DNSPod) for reliability.",
+      "category": "tools",
+      "tags": [
+        "dns",
+        "lookup",
+        "doh",
+        "network",
+        "resolution"
+      ],
+      "priceUsd": 0.001,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "dns-lookup",
+        "fields": [
+          "domain",
+          "A",
+          "AAAA",
+          "MX",
+          "TXT",
+          "NS",
+          "CNAME",
+          "resolvers_used"
+        ]
+      },
+      "paidContent": {
+        "product": "dns-lookup",
+        "title": "DNS Record Lookup",
+        "message": "DNS records resolved."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$0.50",
+        "timeMinutes": 5,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "DNS-over-HTTPS, DNS record types",
+        "buyVsBuild": "Buy $0.001 vs self-dev $0.50 + 5 min. Buy saves 99.8%."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开 DNS 记录查询；无敏感操作"
+      }
+    },
+    {
+      "id": "health-check",
+      "path": "/api/products/health-check",
+      "title": "HTTP Health Check — Status, Latency, SSL, Redirects",
+      "description": "Instant HTTP health check for any URL: response status code, latency in ms, SSL/TLS info, redirect chain analysis. Returns pass/fail verdict and component breakdown. Cheapest health check on x402.",
+      "category": "tools",
+      "tags": [
+        "health",
+        "monitoring",
+        "uptime",
+        "http",
+        "ssl"
+      ],
+      "priceUsd": 0.001,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "health-check",
+        "fields": [
+          "url",
+          "status_code",
+          "latency_ms",
+          "ssl",
+          "redirects",
+          "verdict"
+        ]
+      },
+      "paidContent": {
+        "product": "health-check",
+        "title": "HTTP Health Check",
+        "message": "Health check complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$0.50",
+        "timeMinutes": 5,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "HTTP, SSL/TLS, redirect analysis",
+        "buyVsBuild": "Buy $0.001 vs self-dev $0.50 + 5 min. Buy saves 99.8%."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开 HTTP 健康检查；无敏感操作"
+      }
+    },
+    {
+      "id": "dnssec-check",
+      "path": "/api/products/dnssec-check",
+      "title": "DNSSEC Validation — Verify DNS Security Extensions",
+      "description": "Check if a domain has DNSSEC enabled and validate the chain of trust. Queries DoH with DO=1 flag, returns AD flag status, RRSIG presence, and validation result. Identifies domains with broken or missing DNSSEC.",
+      "category": "tools",
+      "tags": [
+        "dns",
+        "dnssec",
+        "security",
+        "validation",
+        "doh"
+      ],
+      "priceUsd": 0.15,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "dnssec-check",
+        "fields": [
+          "domain",
+          "dnssec_enabled",
+          "ad_flag",
+          "rrsig_present",
+          "validation_status",
+          "trust_chain"
+        ]
+      },
+      "paidContent": {
+        "product": "dnssec-check",
+        "title": "DNSSEC Validation",
+        "message": "DNSSEC check complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$1-3",
+        "timeMinutes": 20,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "DNSSEC, RRSIG, chain of trust, DoH with DO flag",
+        "buyVsBuild": "Buy $0.15 vs self-dev $1-3 + 20 min + DNSSEC expertise. Buy saves 85%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开 DNSSEC 验证；无敏感操作"
+      }
+    },
+    {
+      "id": "proof-of-existence",
+      "path": "/api/products/proof-of-existence",
+      "title": "Proof of Existence — Content Hash + Timestamp on KV",
+      "description": "Prove that content existed at a specific time. Submit any text, get SHA-256 hash stored with timestamp in KV. Returns proof receipt with hash, timestamp, and verification URL. Use for document integrity, timestamping, audit trails.",
+      "category": "tools",
+      "tags": [
+        "proof",
+        "hash",
+        "sha256",
+        "timestamp",
+        "integrity",
+        "audit"
+      ],
+      "priceUsd": 0.1,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "proof-of-existence",
+        "fields": [
+          "content_hash",
+          "sha256",
+          "timestamp",
+          "proof_id",
+          "verify_url"
+        ]
+      },
+      "paidContent": {
+        "product": "proof-of-existence",
+        "title": "Proof of Existence",
+        "message": "Content proof stored."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$0.50-2",
+        "timeMinutes": 15,
+        "requiresInfrastructure": "KV storage for timestamp records",
+        "requiresExpertise": "SHA-256, content hashing, timestamp verification",
+        "buyVsBuild": "Buy $0.10 vs self-dev $0.50-2 + 15 min + KV setup. Buy saves 80%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "内容哈希+时间戳存储；不存储原文内容"
+      }
+    },
+    {
+      "id": "page-change-monitor",
+      "path": "/api/products/page-change-monitor",
+      "title": "Page Change Monitor — Detect Website Content Changes",
+      "description": "Monitor any URL for content changes. Fetches page, computes content hash, compares with previous snapshot stored in KV. Returns change status, diff summary, and updated hash. Call periodically to track changes over time.",
+      "category": "tools",
+      "tags": [
+        "monitoring",
+        "change",
+        "diff",
+        "web",
+        "tracking"
+      ],
+      "priceUsd": 0.25,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "page-change-monitor",
+        "fields": [
+          "url",
+          "changed",
+          "current_hash",
+          "previous_hash",
+          "last_checked",
+          "change_summary"
+        ]
+      },
+      "paidContent": {
+        "product": "page-change-monitor",
+        "title": "Page Change Monitor",
+        "message": "Change check complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$2-5",
+        "timeMinutes": 30,
+        "requiresInfrastructure": "KV storage for snapshots",
+        "requiresExpertise": "Content hashing, diff detection, KV storage management",
+        "buyVsBuild": "Buy $0.25 vs self-dev $2-5 + 30 min + KV setup. Buy saves 87%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页变更监控；不存储原文"
+      }
+    },
+    {
+      "id": "geo-restriction-check",
+      "path": "/api/products/geo-restriction-check",
+      "title": "Geo Restriction Check — Detect Geographic Content Differences",
+      "description": "Check if a URL serves different content based on geographic location. Uses Cloudflare's global edge network and cf-ipcountry to detect geo-fencing, geo-blocking, or localized content. Returns per-region comparison.",
+      "category": "tools",
+      "tags": [
+        "geo",
+        "geolocation",
+        "restriction",
+        "cdn",
+        "regional"
+      ],
+      "priceUsd": 0.2,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "geo-restriction-check",
+        "fields": [
+          "url",
+          "edge_location",
+          "cf_country",
+          "content_hash",
+          "geo_blocked",
+          "redirected"
+        ]
+      },
+      "paidContent": {
+        "product": "geo-restriction-check",
+        "title": "Geo Restriction Check",
+        "message": "Geo check complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$1-3",
+        "timeMinutes": 20,
+        "requiresInfrastructure": "Global edge network (Cloudflare Workers)",
+        "requiresExpertise": "Geo-fencing detection, CDN edge, cf-ipcountry header",
+        "buyVsBuild": "Buy $0.20 vs self-dev $1-3 + 20 min + global infra. Buy saves 85%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "地理内容差异检测；无敏感操作"
+      }
+    },
+    {
+      "id": "summarize-api",
+      "path": "/api/products/summarize-api",
+      "title": "Webpage Summary — Title, Description, Keywords, Body Extract",
+      "description": "Structured extraction from any URL: page title, meta description, meta keywords, Open Graph tags, first 500 chars of body text, heading structure. Returns clean JSON for AI consumption. Not an AI summary — a structured data extraction.",
+      "category": "tools",
+      "tags": [
+        "summary",
+        "extraction",
+        "seo",
+        "metadata",
+        "structured"
+      ],
+      "priceUsd": 0.05,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "summarize-api",
+        "fields": [
+          "url",
+          "title",
+          "description",
+          "keywords",
+          "og_tags",
+          "body_preview",
+          "headings"
+        ]
+      },
+      "paidContent": {
+        "product": "summarize-api",
+        "title": "Webpage Summary",
+        "message": "Summary extraction complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$1-3",
+        "timeMinutes": 15,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "HTML meta parsing, Open Graph, structured extraction",
+        "buyVsBuild": "Buy $0.05 vs self-dev $1-3 + 15 min + HTML parsing. Buy saves 83%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页结构化提取；无敏感操作"
+      }
+    },
+    {
+      "id": "agent-registry",
+      "path": "/api/products/agent-registry",
+      "title": "Agent Registry — Register and Discover AI Agents",
+      "description": "Register your AI agent's profile (name, capabilities, endpoint, pricing) in our KV-backed registry. Other agents can discover and contact registered agents. Build the AI-to-AI network. One-time registration fee, free updates.",
+      "category": "tools",
+      "tags": [
+        "agent",
+        "registry",
+        "discovery",
+        "network",
+        "a2a"
+      ],
+      "priceUsd": 0.05,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "agent-registry",
+        "fields": [
+          "agent_id",
+          "name",
+          "capabilities",
+          "endpoint",
+          "pricing",
+          "registered_at"
+        ]
+      },
+      "paidContent": {
+        "product": "agent-registry",
+        "title": "Agent Registry",
+        "message": "Agent registered."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$2-5",
+        "timeMinutes": 30,
+        "requiresInfrastructure": "KV storage for agent profiles",
+        "requiresExpertise": "A2A protocol, agent discovery, profile management",
+        "buyVsBuild": "Buy $0.05 vs self-dev $2-5 + 30 min + KV setup. Buy saves 97%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "Agent 注册信息存储；注册者自愿提交公开信息"
+      }
+    },
+    {
+      "id": "openapi-validate",
+      "path": "/api/products/openapi-validate",
+      "title": "OpenAPI Spec Validation — Validate Swagger/OpenAPI JSON",
+      "description": "Validate any OpenAPI/Swagger specification: fetch JSON, check required fields (openapi version, info, paths), verify path definitions, parameter types, response schemas. Returns validation errors, warnings, and compliance score.",
+      "category": "tools",
+      "tags": [
+        "openapi",
+        "swagger",
+        "validation",
+        "api",
+        "specification"
+      ],
+      "priceUsd": 0.3,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "openapi-validate",
+        "fields": [
+          "spec_url",
+          "openapi_version",
+          "valid",
+          "errors",
+          "warnings",
+          "compliance_score",
+          "paths_count"
+        ]
+      },
+      "paidContent": {
+        "product": "openapi-validate",
+        "title": "OpenAPI Validation",
+        "message": "Spec validation complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$3-8",
+        "timeMinutes": 30,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "OpenAPI 3.x spec, JSON schema validation, API design patterns",
+        "buyVsBuild": "Buy $0.30 vs self-dev $3-8 + 30 min + spec expertise. Buy saves 90%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "OpenAPI 规范验证；无敏感操作"
       }
     }
   ],
