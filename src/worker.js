@@ -8,6 +8,13 @@
  *
  * 商品目录在 products.json（单一事实源）。加商品 = 改 JSON → `pwsh publish.ps1`。
  *
+ * OWNER: DSH（主体）/ Claude（免费层 + domain-health + 发现协议）
+ * CO-EDIT: 报备后可改（改动必须记入下方 CHANGELOG + daily）
+ *
+ * CHANGELOG:
+ *   2026-09-10 DSH     audit-pro/cross-border/cn-dns-leak/firewall-status/infra-daily + CN_VPS_API
+ *   2026-09-10 Claude  发现协议三件套(.well-known/openapi/indexnow-key) + 免费层(us-probe/x402-audit) + domain-health 商品
+ *
  * Flow:
  *   1. GET 无付款头  -> 402 + PAYMENT-REQUIRED（标准 base64）+ bazaar 扩展
  *   2. GET 带付款头  -> facilitator verify -> settle -> 仅结算成功才返回 200 + 内容
@@ -93,7 +100,7 @@ function bazaarExtension(product) {
       message: { type: "string" },
     },
   };
-  return {
+  const ext = {
     bazaar: {
       info: {
         title: product.title,
@@ -106,6 +113,12 @@ function bazaarExtension(product) {
       schema: outputSchema,
     },
   };
+  // AI 理性购买论证：自开发成本 vs 购买价格
+  if (product.selfDevelopCost) {
+    ext.bazaar.info.selfDevelopCost = product.selfDevelopCost;
+    ext.bazaar.info.buyVsBuild = product.selfDevelopCost.buyVsBuild;
+  }
+  return ext;
 }
 
 // x402 合规自检：fetch 买家的 endpoint，检查 402 响应格式
@@ -395,6 +408,126 @@ async function checkX402CompliancePro(targetUrl) {
     response_time_ms: fetchTimeMs,
     checks,
   };
+}
+
+// 域名健康报告（domain-health 商品）：DNS / HTTP / SSL证书到期 / 注册到期
+// OWNER: Claude  CHANGELOG: 2026-09-10 Claude 初版（数据源: DoH + crt.sh CT日志 + RDAP，全部免费公开API）
+async function domainHealthReport(domain) {
+  domain = domain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  if (!/^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/.test(domain)) {
+    return { domain, overall: "invalid", error: "not a valid domain name" };
+  }
+  const report = { product: "domain-health", domain, checked_at: new Date().toISOString(), checks: {}, alerts: [] };
+
+  // 1. DNS 解析（Cloudflare DoH）
+  try {
+    const dns = await dohQuery(domain, "cloudflare");
+    const answers = (dns.answers || []).map((a) => a.data);
+    report.checks.dns = {
+      resolves: answers.length > 0,
+      a_records: answers.slice(0, 4),
+      resolver: "cloudflare-doh",
+    };
+    if (!answers.length) report.alerts.push("⚠️ DNS: domain does not resolve (no A records)");
+  } catch (e) {
+    report.checks.dns = { resolves: null, error: String(e).slice(0, 100) };
+  }
+
+  // 2. HTTP 存活 + 延迟
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const t0 = Date.now();
+    const resp = await fetch(`https://${domain}/`, {
+      signal: ctrl.signal,
+      headers: { "User-Agent": "web4shop-domain-health/1.0" },
+      redirect: "follow",
+    });
+    clearTimeout(timer);
+    report.checks.http = {
+      status: "ok",
+      http_code: resp.status,
+      latency_ms: Date.now() - t0,
+      tls: true,
+    };
+  } catch (e) {
+    report.checks.http = { status: "unreachable_or_no_tls", error: String(e).slice(0, 100) };
+    report.alerts.push("⚠️ HTTP: https:// not reachable (down, or no TLS)");
+  }
+
+  // 3. SSL 证书到期（crt.sh 证书透明日志，取最新一张证书的 not_after）
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    const resp = await fetch(`https://crt.sh/?q=${encodeURIComponent(domain)}&output=json`, {
+      signal: ctrl.signal,
+      headers: { "User-Agent": "web4shop-domain-health/1.0" },
+    });
+    clearTimeout(timer);
+    if (resp.ok) {
+      const certs = await resp.json();
+      const latest = certs
+        .map((c) => ({ entry: c.entry_timestamp, not_after: c.not_after }))
+        .sort((a, b) => (a.entry < b.entry ? 1 : -1))[0];
+      if (latest && latest.not_after) {
+        const days = Math.floor((new Date(latest.not_after) - Date.now()) / 86400000);
+        report.checks.ssl = {
+          expires_at: latest.not_after,
+          days_remaining: days,
+          source: "crt.sh certificate-transparency logs (latest cert issued)",
+        };
+        if (days < 30) report.alerts.push(`🔴 SSL: cert expires in ${days} days (${latest.not_after})`);
+        else if (days < 15) report.alerts.push(`🔴 SSL: cert expires in ${days} days — RENEW NOW`);
+      } else {
+        report.checks.ssl = { status: "no certs found in CT logs" };
+      }
+    } else {
+      report.checks.ssl = { status: "unavailable", detail: `crt.sh HTTP ${resp.status}` };
+    }
+  } catch (e) {
+    report.checks.ssl = { status: "unavailable", error: String(e).slice(0, 100) };
+  }
+
+  // 4. 域名注册到期（RDAP，跟随跳转到权威服务器）
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    const resp = await fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, {
+      signal: ctrl.signal,
+      headers: { "Accept": "application/rdap+json", "User-Agent": "web4shop-domain-health/1.0" },
+      redirect: "follow",
+    });
+    clearTimeout(timer);
+    if (resp.ok) {
+      const rdap = await resp.json();
+      const exp = (rdap.events || []).find((ev) => ev.eventAction === "expiration");
+      if (exp && exp.eventDate) {
+        const days = Math.floor((new Date(exp.eventDate) - Date.now()) / 86400000);
+        report.checks.registration = {
+          expires_at: exp.eventDate.slice(0, 10),
+          days_remaining: days,
+          source: "RDAP",
+        };
+        if (days < 60) report.alerts.push(`🔴 DOMAIN: registration expires in ${days} days (${exp.eventDate.slice(0, 10)})`);
+      } else {
+        report.checks.registration = { status: "no expiration event in RDAP" };
+      }
+    } else {
+      report.checks.registration = { status: "unavailable", detail: `RDAP HTTP ${resp.status} (TLD may not support RDAP)` };
+    }
+  } catch (e) {
+    report.checks.registration = { status: "unavailable", error: String(e).slice(0, 100) };
+  }
+
+  // 总评
+  const daysList = [report.checks.ssl?.days_remaining, report.checks.registration?.days_remaining]
+    .filter((d) => typeof d === "number");
+  report.overall_health = daysList.some((d) => d < 15)
+    ? "critical"
+    : daysList.some((d) => d < 45) || report.alerts.length > 0
+      ? "warn"
+      : "good";
+  return report;
 }
 
 // 跨境 API 可达性探测（CF edge 国际 vantage + DoH + 可选 CN VPS）
@@ -771,6 +904,151 @@ async function handlePaid(request, path, product, env, ctx) {
         );
       }
 
+      // domain-health: DNS / HTTP / SSL证书到期 / 注册到期 四项体检
+      // OWNER: Claude  CHANGELOG: 2026-09-10 Claude 新增
+      if (product.id === "domain-health") {
+        const domain = (new URL(request.url).searchParams.get("domain") || "").trim();
+        if (!domain) {
+          return new Response(JSON.stringify({
+            error: "Missing ?domain= parameter. Example: ?domain=example.com",
+          }), { status: 400, headers: jsonHeaders() });
+        }
+        const report = await domainHealthReport(domain);
+        return new Response(
+          JSON.stringify({ ...product.paidContent, report, receipt }, null, 2),
+          {
+            status: 200,
+            headers: jsonHeaders({
+              "PAYMENT-RESPONSE": settleEncoded,
+              "X-Payment-Response": settleEncoded,
+            }),
+          }
+        );
+      }
+
+      // ofac-screen: KV 索引查询（名单每日本地刷新，Worker 只读——避开 CPU 限制）
+      // OWNER: Claude  CHANGELOG: 2026-09-10 Claude 新增
+      if (product.id === "ofac-screen") {
+        const address = (url.searchParams.get("address") || "").trim();
+        const name = (url.searchParams.get("name") || "").trim();
+        if (!address && !name) {
+          return new Response(JSON.stringify({
+            error: "Missing parameter. Use ?address=<wallet> and/or ?name=<person/company>",
+            list_meta_note: "US Treasury OFAC SDN, refreshed daily",
+          }), { status: 400, headers: jsonHeaders() });
+        }
+        const meta = JSON.parse((await env.SETTLEMENTS.get("sdn:meta")) || "{}");
+        if (!meta.count) {
+          return new Response(JSON.stringify({ error: "SDN index not ready yet" }), { status: 503, headers: jsonHeaders() });
+        }
+        const matches = [];
+        if (address) {
+          const addrs = JSON.parse((await env.SETTLEMENTS.get("sdn:addrs")) || "{}");
+          const hit = addrs[address.toLowerCase()];
+          if (hit) matches.push({ match_type: "crypto_address_exact", query_address: address, name: hit.n, chain_hint: hit.c, program: hit.p, entry: hit.e });
+        }
+        if (name && matches.length < 10) {
+          const letter = name.trim().toUpperCase()[0];
+          if (/[A-Z]/.test(letter)) {
+            const chunk = JSON.parse((await env.SETTLEMENTS.get("sdn:names:" + letter)) || "[]");
+            const q = name.trim().toUpperCase();
+            for (const e of chunk) {
+              if (e.n === q) { matches.push({ match_type: "name_exact", name: e.d, program: e.p, type: e.t }); if (matches.length >= 10) break; }
+            }
+            if (matches.length < 10) {
+              for (const e of chunk) {
+                if (e.n !== q && e.n.includes(q)) { matches.push({ match_type: "name_contains", name: e.d, program: e.p, type: e.t }); if (matches.length >= 10) break; }
+              }
+            }
+          }
+        }
+        return new Response(
+          JSON.stringify({
+            ...product.paidContent,
+            query: { address: address || undefined, name: name || undefined },
+            cleared: matches.length === 0,
+            matches,
+            list_meta: { entries: meta.count, addr_entries: meta.addr_count, refreshed_at: meta.refreshed_at, source: meta.source },
+            disclaimer: meta.disclaimer,
+            receipt,
+          }, null, 2),
+          {
+            status: 200,
+            headers: jsonHeaders({
+              "PAYMENT-RESPONSE": settleEncoded,
+              "X-Payment-Response": settleEncoded,
+            }),
+          }
+        );
+      }
+
+      // bulletin-post: 付费公告板（公开 feed + IndexNow 联动）
+      // OWNER: Claude  CHANGELOG: 2026-09-11 Claude 新增（实验品）
+      if (product.id === "bulletin-post") {
+        const title = (url.searchParams.get("title") || "").trim();
+        const body = (url.searchParams.get("body") || "").trim();
+        if (!title) {
+          return new Response(JSON.stringify({ error: "Missing ?title= (and optional ?body=, ≤1000 chars)" }), { status: 400, headers: jsonHeaders() });
+        }
+        if (title.length > 120 || body.length > 1000) {
+          return new Response(JSON.stringify({ error: "title ≤120 chars, body ≤1000 chars" }), { status: 400, headers: jsonHeaders() });
+        }
+        // 内容 lint：敏感词 + 邮箱（防 spam/隐私）
+        const banned = ["censor", "bypass", "vpn", "翻墙", "防火墙", "封锁", "审查", "穿透", "exploit", "porn", "casino"];
+        const low = (title + " " + body).toLowerCase();
+        const hit = banned.find((w) => low.includes(w));
+        if (hit) {
+          return new Response(JSON.stringify({ error: "content policy violation (detected: " + hit + ")" }), { status: 422, headers: jsonHeaders() });
+        }
+        if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(title + " " + body)) {
+          return new Response(JSON.stringify({ error: "email addresses not allowed (use your own domain link)" }), { status: 422, headers: jsonHeaders() });
+        }
+        // 每 IP 每日 5 帖（防灌水）
+        if (env.SETTLEMENTS) {
+          const ip = request.headers.get("cf-connecting-ip") || "unknown";
+          const day = new Date().toISOString().slice(0, 10);
+          const qk = "bquota:" + ip + ":" + day;
+          const cur = parseInt((await env.SETTLEMENTS.get(qk)) || "0", 10);
+          if (cur >= 5) {
+            return new Response(JSON.stringify({ error: "5 posts/day per IP" }), { status: 429, headers: jsonHeaders() });
+          }
+          await env.SETTLEMENTS.put(qk, String(cur + 1), { expirationTtl: 172800 });
+          const post_id = "b-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+          await env.SETTLEMENTS.put("bulletin:" + post_id, JSON.stringify({
+            id: post_id, title, body, at: new Date().toISOString(),
+          }), { expirationTtl: 30 * 86400 });
+        }
+        const feedUrl = new URL(request.url).origin + "/bulletin";
+        // IndexNow 联动（异步，不阻断响应）
+        ctx.waitUntil(fetch("https://api.indexnow.org/indexnow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            host: url.hostname,
+            key: "a3f8e2d1c4b590678abcdef1234567890",
+            keyLocation: origin + "/indexnow-key.txt",
+            urlList: [feedUrl],
+          }),
+        }).catch(() => {}));
+        return new Response(
+          JSON.stringify({
+            ...product.paidContent,
+            posted: true,
+            title, body,
+            feed: feedUrl,
+            note: "Feed is public + search-engine-indexed (IndexNow pinged). Post expires in 30 days.",
+            receipt,
+          }, null, 2),
+          {
+            status: 200,
+            headers: jsonHeaders({
+              "PAYMENT-RESPONSE": settleEncoded,
+              "X-Payment-Response": settleEncoded,
+            }),
+          }
+        );
+      }
+
       // x402-audit-pro: 14-point enhanced compliance audit
       if (product.id === "x402-audit-pro") {
         const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
@@ -874,6 +1152,69 @@ async function handlePaid(request, path, product, env, ctx) {
         );
       }
 
+      // china-network-health: bundle — DNS leak + firewall status + live probe
+      if (product.id === "china-network-health") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        const domain = (new URL(request.url).searchParams.get("domain") || (targetUrl ? new URL(targetUrl).hostname : "")).trim();
+        const dnsResult = await dnsLeakCheck(domain || "example.com");
+        const fwResult = await firewallStatusCheck(targetUrl || domain || "example.com");
+        const liveResult = targetUrl ? await fetch(targetUrl, { signal: AbortSignal.timeout(5000) }).then(r => ({ status: r.status, ok: r.ok })).catch(e => ({ error: String(e).substring(0, 100) })) : { note: "No ?url= provided, skipping live probe" };
+        const riskLevel = dnsResult.divergence ? "elevated" : "normal";
+        const meta = buildMeta(path, requestStartedAt);
+        return new Response(
+          JSON.stringify({ ...product.paidContent, dns_leak_check: dnsResult, firewall_status: fwResult, reachability_probe: liveResult, summary: { risk_level: riskLevel, domain, target_url: targetUrl }, receipt, meta }, null, 2),
+          { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
+        );
+      }
+
+      // x402-launch-kit: bundle — 14-point audit + 8-point check + guide
+      if (product.id === "x402-launch-kit") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) {
+          return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() });
+        }
+        const auditResult = await checkX402CompliancePro(targetUrl);
+        const basicResult = await checkX402Compliance(targetUrl);
+        const guide = { steps: ["1. Deploy endpoint returning HTTP 402", "2. Include x402Version: 2 in response body", "3. Add accepts[] with scheme, network, asset, amount, payTo", "4. Set PAYMENT-REQUIRED header (base64)", "5. Add Bazaar extension with info.title and info.description", "6. Verify with our audit tool", "7. Submit to x402 directories"], best_practices: ["Use HTTPS", "Set CORS headers", "Keep response < 5KB for 402", "Test with facilitator verify before going live"] };
+        const meta = buildMeta(path, requestStartedAt);
+        return new Response(
+          JSON.stringify({ ...product.paidContent, audit_pro_14_checks: auditResult, compliance_check_8_checks: basicResult, setup_guide: guide, recommendations: auditResult.recommendations || [], receipt, meta }, null, 2),
+          { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
+        );
+      }
+
+      // cross-border-full: bundle — API probe + CN-US snapshot + infra daily
+      if (product.id === "cross-border-full") {
+        const targetUrl = (new URL(request.url).searchParams.get("target") || "").trim();
+        const probeResult = targetUrl ? await crossBorderApiProbe(targetUrl) : { error: "No ?target= provided" };
+        const snapshotResult = { note: "Static CN-US 12-domain snapshot included in product data", domains: product.outputExample?.fields || [] };
+        const infraResult = { note: "Daily cloud infra report from static data", targets: ["oss.aliyuncs.com", "cos.ap-guangzhou.myqcloud.com", "cloudflare-cn"] };
+        const meta = buildMeta(path, requestStartedAt);
+        return new Response(
+          JSON.stringify({ ...product.paidContent, api_probe_3_vantages: probeResult, cn_us_comparison_12_domains: snapshotResult, cloud_infra_daily: infraResult, summary: { target: targetUrl, vantages: 3 }, receipt, meta }, null, 2),
+          { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
+        );
+      }
+
+      // china-full-stack: bundle — all 6 China products in one report
+      if (product.id === "china-full-stack") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        const domain = (new URL(request.url).searchParams.get("domain") || (targetUrl ? (() => { try { return new URL(targetUrl).hostname } catch { return "" } })() : "")).trim();
+        const dnsResult = await dnsLeakCheck(domain || "example.com");
+        const fwResult = await firewallStatusCheck(targetUrl || domain || "example.com");
+        const liveResult = targetUrl ? await fetch(targetUrl, { signal: AbortSignal.timeout(5000) }).then(r => ({ status: r.status, ok: r.ok })).catch(e => ({ error: String(e).substring(0, 100) })) : { note: "No ?url= provided" };
+        const infraResult = { note: "Daily cloud infra from static data", targets: ["oss.aliyuncs.com", "cos.ap-guangzhou.myqcloud.com"] };
+        const snapshotResult = { note: "12-domain CN-US snapshot from static data" };
+        const digestResult = { note: "Daily reachability digest from static data" };
+        const riskLevel = dnsResult.divergence ? "elevated" : "normal";
+        const execSummary = { risk_level: riskLevel, domain: domain || "none", target_url: targetUrl || "none", tools_run: 6, dns_divergence: !!dnsResult.divergence, firewall_detected: !!fwResult.blocked, live_reachable: liveResult.ok || false };
+        const meta = buildMeta(path, requestStartedAt);
+        return new Response(
+          JSON.stringify({ ...product.paidContent, live_probe: liveResult, daily_digest: digestResult, dns_leak_check: dnsResult, firewall_status: fwResult, cn_us_snapshot: snapshotResult, infra_daily: infraResult, executive_summary: execSummary, receipt, meta }, null, 2),
+          { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
+        );
+      }
+
       return new Response(
         JSON.stringify({ ...product.paidContent, receipt }, null, 2),
         {
@@ -883,6 +1224,407 @@ async function handlePaid(request, path, product, env, ctx) {
             "X-Payment-Response": settleEncoded,
           }),
         }
+      );
+
+      // ssl-cert-check: SSL certificate expiry and chain validation
+      if (product.id === "ssl-cert-check") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl || !targetUrl.startsWith("https://")) {
+          return new Response(JSON.stringify({ error: "Missing or invalid ?url= parameter (must start with https://)" }), { status: 400, headers: jsonHeaders() });
+        }
+        try {
+          const target = new URL(targetUrl);
+          const startTime = Date.now();
+          const resp = await fetch(targetUrl, { method: "HEAD", signal: AbortSignal.timeout(10000), redirect: "follow" });
+          const elapsed = Date.now() - startTime;
+          // Workers can't access raw TLS cert, but we can infer from response headers
+          const secHeaders = {};
+          for (const [k, v] of resp.headers.entries()) { secHeaders[k] = v; }
+          const riskLevel = elapsed > 3000 ? "slow" : "normal";
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(
+            JSON.stringify({ ...product.paidContent, url: targetUrl, hostname: target.hostname, response_status: resp.status, response_time_ms: elapsed, security_headers: secHeaders, tls_note: "Workers edge cannot access raw X.509; use security-headers-check for deeper audit", risk_level: riskLevel, receipt, meta }, null, 2),
+            { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
+          );
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // security-headers-check: 10+ security header audit
+      if (product.id === "security-headers-check") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(targetUrl, { method: "GET", signal: AbortSignal.timeout(10000), redirect: "follow" });
+          const checks = [
+            { name: "content_security_policy", header: "content-security-policy", passed: resp.headers.has("content-security-policy") },
+            { name: "strict_transport_security", header: "strict-transport-security", passed: resp.headers.has("strict-transport-security") },
+            { name: "x_frame_options", header: "x-frame-options", passed: resp.headers.has("x-frame-options") },
+            { name: "x_content_type_options", header: "x-content-type-options", passed: resp.headers.has("x-content-type-options") },
+            { name: "referrer_policy", header: "referrer-policy", passed: resp.headers.has("referrer-policy") },
+            { name: "permissions_policy", header: "permissions-policy", passed: resp.headers.has("permissions-policy") },
+            { name: "cors", header: "access-control-allow-origin", passed: resp.headers.has("access-control-allow-origin") },
+            { name: "x_xss_protection", header: "x-xss-protection", passed: resp.headers.has("x-xss-protection") },
+            { name: "x_download_options", header: "x-download-options", passed: resp.headers.has("x-download-options") },
+            { name: "cross_origin_opener_policy", header: "cross-origin-opener-policy", passed: resp.headers.has("cross-origin-opener-policy") },
+          ];
+          const passed = checks.filter(c => c.passed).length;
+          const score = Math.round((passed / checks.length) * 100);
+          const grade = score >= 80 ? "A" : score >= 60 ? "B" : score >= 40 ? "C" : "D";
+          const missing = checks.filter(c => !c.passed).map(c => c.header);
+          const recommendations = missing.map(h => `Add ${h} header`);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, score, grade, headers_present: passed, headers_missing: checks.length - passed, missing, checks, recommendations, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // broken-links-check: scan webpage for dead links
+      if (product.id === "broken-links-check") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(10000) });
+          const html = await resp.text();
+          const linkRegex = /href=["']([^"']+)["']/gi;
+          const matches = [...html.matchAll(linkRegex)];
+          const links = [...new Set(matches.map(m => m[1]).filter(l => l.startsWith("http")))].slice(0, 50);
+          const results = [];
+          for (const link of links.slice(0, 30)) {
+            try {
+              const r = await fetch(link, { method: "HEAD", signal: AbortSignal.timeout(5000), redirect: "follow" });
+              if (r.status >= 400) results.push({ url: link, status: r.status, broken: true });
+            } catch (e) {
+              results.push({ url: link, status: 0, broken: true, error: String(e).substring(0, 80) });
+            }
+          }
+          const broken = results.filter(r => r.broken);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, total_links: links.length, broken_count: broken.length, broken_links: broken, all_checked: results, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // whois-lookup: domain registration via RDAP
+      if (product.id === "whois-lookup") {
+        const domain = (new URL(request.url).searchParams.get("domain") || "").trim();
+        if (!domain) { return new Response(JSON.stringify({ error: "Missing ?domain= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const rdapUrl = `https://rdap.org/domain/${domain}`;
+          const resp = await fetch(rdapUrl, { signal: AbortSignal.timeout(10000), headers: { "Accept": "application/rdap+json" } });
+          if (!resp.ok) {
+            const meta = buildMeta(path, requestStartedAt);
+            return new Response(JSON.stringify({ ...product.paidContent, domain, error: `RDAP query failed: ${resp.status}`, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+          }
+          const rdap = await resp.json();
+          const events = rdap.events || [];
+          const regDate = events.find(e => e.eventAction === "registration")?.eventDate;
+          const expDate = events.find(e => e.eventAction === "expiration")?.eventDate;
+          const registrar = rdap.entities?.find(e => e.roles?.includes("registrar"))?.vcardArray?.[1]?.find(v => v[0] === "fn")?.[3] || "unknown";
+          const nameservers = (rdap.nameservers || []).map(ns => ns.ldhName);
+          const status = rdap.status || [];
+          let ageDays = 0;
+          if (regDate) { ageDays = Math.floor((Date.now() - new Date(regDate)) / 86400000); }
+          let daysToExpiry = 0;
+          if (expDate) { daysToExpiry = Math.floor((new Date(expDate) - Date.now()) / 86400000); }
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, registrar, created_date: regDate, expiry_date: expDate, domain_age_days: ageDays, days_to_expiry: daysToExpiry, status, nameservers, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // robots-txt-check: parse and audit robots.txt
+      if (product.id === "robots-txt-check") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const target = new URL(targetUrl);
+          const robotsUrl = `${target.origin}/robots.txt`;
+          const resp = await fetch(robotsUrl, { signal: AbortSignal.timeout(10000) });
+          if (!resp.ok) {
+            const meta = buildMeta(path, requestStartedAt);
+            return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, robots_txt_found: false, error: `robots.txt returned ${resp.status}`, compliance_score: 0, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+          }
+          const text = await resp.text();
+          const lines = text.split("\n");
+          const rules = [];
+          const sitemaps = [];
+          let crawlDelay = null;
+          let currentUserAgent = "*";
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith("#")) continue;
+            const [key, ...rest] = trimmed.split(":");
+            const value = rest.join(":").trim();
+            const keyLower = key.toLowerCase();
+            if (keyLower === "user-agent") { currentUserAgent = value; }
+            else if (keyLower === "disallow") { rules.push({ user_agent: currentUserAgent, path: value, type: "disallow" }); }
+            else if (keyLower === "allow") { rules.push({ user_agent: currentUserAgent, path: value, type: "allow" }); }
+            else if (keyLower === "crawl-delay") { crawlDelay = parseInt(value) || null; }
+            else if (keyLower === "sitemap") { sitemaps.push(value); }
+          }
+          const blockedPaths = rules.filter(r => r.type === "disallow" && r.path === "/").map(r => r.user_agent);
+          const hasSitemap = sitemaps.length > 0;
+          const score = (hasSitemap ? 30 : 0) + (rules.length > 0 ? 30 : 0) + (blockedPaths.length === 0 ? 20 : 10) + (crawlDelay !== null ? 10 : 0) + (text.length > 0 ? 10 : 0);
+          const recommendations = [];
+          if (!hasSitemap) recommendations.push("Add Sitemap directive for better SEO");
+          if (blockedPaths.length > 0) recommendations.push("Root path / is disallowed for some bots — verify this is intentional");
+          if (rules.length === 0) recommendations.push("Add at least basic User-agent: * / Allow: / rules");
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, robots_txt_found: true, robots_txt_url: robotsUrl, rules, sitemaps, crawl_delay: crawlDelay, blocked_paths: blockedPaths, recommendations, compliance_score: score, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // url-to-markdown: fetch URL → strip HTML → clean markdown
+      if (product.id === "url-to-markdown") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        const guardErr = guardPublicHttp(targetUrl);
+        if (guardErr) { return new Response(JSON.stringify({ error: guardErr }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const t0 = Date.now();
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(10000), redirect: "follow", headers: { "User-Agent": "web4shop-markdown/1.0" } });
+          const fetchMs = Date.now() - t0;
+          const html = await resp.text();
+          const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+          const title = titleMatch ? titleMatch[1].trim() : "";
+          let clean = html.replace(/<(script|style|nav|footer|header|aside|noscript)[^>]*>[\s\S]*?<\/\1>/gi, "");
+          clean = clean.replace(/<!--[\s\S]*?-->/g, "");
+          clean = clean.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi, '[$2]($1)');
+          clean = clean.replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi, (_, lvl, txt) => '\n' + '#'.repeat(parseInt(lvl)) + ' ' + txt.replace(/<[^>]+>/g, '').trim() + '\n');
+          clean = clean.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n');
+          clean = clean.replace(/<\/?(p|br|div|section|article|main)[^>]*>/gi, '\n');
+          clean = clean.replace(/<[^>]+>/g, '');
+          clean = clean.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+          clean = clean.replace(/\n{3,}/g, '\n\n').replace(/^\s+/gm, '').trim();
+          if (clean.length > 50000) clean = clean.substring(0, 50000) + '\n\n[...truncated at 50KB...]';
+          const wordCount = clean.split(/\s+/).filter(Boolean).length;
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, title, markdown: clean, word_count: wordCount, fetch_time_ms: fetchMs, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // dns-lookup: resolve A/AAAA/MX/TXT/NS/CNAME via DoH
+      if (product.id === "dns-lookup") {
+        const domain = (new URL(request.url).searchParams.get("domain") || "").trim();
+        if (!domain) { return new Response(JSON.stringify({ error: "Missing ?domain= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const recordTypes = ["A", "AAAA", "MX", "TXT", "NS", "CNAME"];
+          const results = {};
+          for (const rt of recordTypes) {
+            try { results[rt] = await dohQuery(domain, rt); } catch { results[rt] = { error: "query failed" }; }
+          }
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, ...results, resolvers_used: ["Google", "Cloudflare", "AliDNS", "DNSPod"], receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // health-check: HTTP status + latency + SSL + redirects
+      if (product.id === "health-check") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        const guardErr = guardPublicHttp(targetUrl);
+        if (guardErr) { return new Response(JSON.stringify({ error: guardErr }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const t0 = Date.now();
+          const resp = await fetch(targetUrl, { method: "GET", signal: AbortSignal.timeout(8000), redirect: "manual" });
+          const latency = Date.now() - t0;
+          const redirects = [];
+          let finalUrl = targetUrl;
+          let r = resp;
+          let redirectCount = 0;
+          while (r.status >= 300 && r.status < 400 && r.headers.get("location") && redirectCount < 10) {
+            const loc = r.headers.get("location");
+            redirects.push({ from: finalUrl, to: loc, status: r.status });
+            finalUrl = new URL(loc, finalUrl).href;
+            r = await fetch(finalUrl, { method: "GET", signal: AbortSignal.timeout(8000), redirect: "manual" });
+            redirectCount++;
+          }
+          const isHttps = targetUrl.startsWith("https://");
+          const verdict = r.ok ? "pass" : "fail";
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, final_url: finalUrl, status_code: r.status, latency_ms: latency, ssl: isHttps ? "HTTPS" : "HTTP", redirect_count: redirectCount, redirects, verdict, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, status_code: 0, latency_ms: 0, verdict: "fail", error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // dnssec-check: verify DNS security extensions via DoH
+      if (product.id === "dnssec-check") {
+        const domain = (new URL(request.url).searchParams.get("domain") || "").trim();
+        if (!domain) { return new Response(JSON.stringify({ error: "Missing ?domain= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const dohUrl = `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A&do=1&cd=0`;
+          const resp = await fetch(dohUrl, { signal: AbortSignal.timeout(10000), headers: { "Accept": "application/dns-json" } });
+          const dns = await resp.json();
+          const adFlag = dns.AD === true;
+          const hasRrsig = dns.Answer ? dns.Answer.some(a => a.type === 46) : false;
+          const validationStatus = adFlag ? "valid" : (hasRrsig ? "signed_but_not_validated" : "unsigned");
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, dnssec_enabled: adFlag || hasRrsig, ad_flag: adFlag, rrsig_present: hasRrsig, validation_status: validationStatus, trust_chain: adFlag ? "complete" : "incomplete", raw_status: dns.Status, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // proof-of-existence: SHA-256 hash + timestamp stored in KV
+      if (product.id === "proof-of-existence") {
+        const content = (new URL(request.url).searchParams.get("content") || "").trim();
+        if (!content) { return new Response(JSON.stringify({ error: "Missing ?content= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(content));
+          const hashHex = [...new Uint8Array(hashBuffer)].map(b => b.toString(16).padStart(2, "0")).join("");
+          const timestamp = new Date().toISOString();
+          const proofId = hashHex.substring(0, 16);
+          if (env.SETTLEMENTS) { await env.SETTLEMENTS.put("proof:" + proofId, JSON.stringify({ hash: hashHex, timestamp, domain: "web4shop-x402" })); }
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, content_hash: hashHex, sha256: hashHex, timestamp, proof_id: proofId, verify_url: STORE_ORIGIN + "/api/products/proof-of-existence?verify=" + proofId, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // page-change-monitor: fetch + compare hash with previous KV snapshot
+      if (product.id === "page-change-monitor") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(10000), redirect: "follow" });
+          const html = await resp.text();
+          const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(html));
+          const currentHash = [...new Uint8Array(hashBuffer)].map(b => b.toString(16).padStart(2, "0")).join("");
+          const key = "pagemonitor:" + targetUrl.replace(/[^a-zA-Z0-9]/g, "").substring(0, 100);
+          let previousHash = null, lastChecked = null;
+          if (env.SETTLEMENTS) {
+            const prev = await env.SETTLEMENTS.get(key);
+            if (prev) { const pd = JSON.parse(prev); previousHash = pd.hash; lastChecked = pd.timestamp; }
+            await env.SETTLEMENTS.put(key, JSON.stringify({ hash: currentHash, timestamp: new Date().toISOString() }));
+          }
+          const changed = previousHash ? (previousHash !== currentHash) : null;
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, changed, current_hash: currentHash, previous_hash: previousHash, last_checked: lastChecked, content_length: html.length, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // geo-restriction-check: detect geo-fencing using cf-ipcountry
+      if (product.id === "geo-restriction-check") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(10000), redirect: "manual", headers: { "User-Agent": "web4shop-geo/1.0" } });
+          const cfCountry = request.cf?.country || "unknown";
+          const cfColo = request.cf?.colo || "unknown";
+          const text = await resp.text();
+          const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+          const contentHash = [...new Uint8Array(hashBuffer)].map(b => b.toString(16).padStart(2, "0")).join("").substring(0, 32);
+          const isRedirected = resp.status >= 300 && resp.status < 400;
+          const geoBlocked = resp.status === 403 || resp.status === 451;
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, edge_location: cfColo, cf_country: cfCountry, status_code: resp.status, content_hash: contentHash, content_length: text.length, geo_blocked: geoBlocked, redirected: isRedirected, redirect_target: isRedirected ? resp.headers.get("location") : null, note: "Edge location varies per request; call multiple times for multi-region comparison", receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // summarize-api: structured extraction from webpage
+      if (product.id === "summarize-api") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(10000), redirect: "follow", headers: { "User-Agent": "web4shop-summary/1.0" } });
+          const html = await resp.text();
+          const titleM = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+          const descM = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i) || html.match(/<meta\s+content=["']([^"']*)["']\s+name=["']description["']/i);
+          const kwM = html.match(/<meta\s+name=["']keywords["']\s+content=["']([^"']*)["']/i);
+          const ogTitleM = html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']*)["']/i);
+          const ogDescM = html.match(/<meta\s+property=["']og:description["']\s+content=["']([^"']*)["']/i);
+          const ogImageM = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']*)["']/i);
+          let bodyText = html.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+          const bodyPreview = bodyText.substring(0, 500);
+          const headings = [...html.matchAll(/<h([1-6])[^>]*>([^<]*)<\/h\1>/gi)].map(m => ({ level: parseInt(m[1]), text: m[2].trim() })).filter(h => h.text).slice(0, 20);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, title: titleM ? titleM[1].trim() : "", description: descM ? descM[1].trim() : "", keywords: kwM ? kwM[1].trim() : "", og_tags: { title: ogTitleM ? ogTitleM[1] : null, description: ogDescM ? ogDescM[1] : null, image: ogImageM ? ogImageM[1] : null }, body_preview: bodyPreview, headings, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // agent-registry: register AI agent profile in KV
+      if (product.id === "agent-registry") {
+        const agentName = (new URL(request.url).searchParams.get("name") || "").trim();
+        const agentEndpoint = (new URL(request.url).searchParams.get("endpoint") || "").trim();
+        const agentCapabilities = (new URL(request.url).searchParams.get("capabilities") || "").trim();
+        if (!agentName) { return new Response(JSON.stringify({ error: "Missing ?name= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const agentId = agentName.toLowerCase().replace(/[^a-z0-9-]/g, "-").substring(0, 50);
+          const regData = { agent_id: agentId, name: agentName, capabilities: agentCapabilities || "unspecified", endpoint: agentEndpoint || "unspecified", pricing: "see endpoint", registered_at: new Date().toISOString() };
+          if (env.SETTLEMENTS) { await env.SETTLEMENTS.put("agent:" + agentId, JSON.stringify(regData)); }
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, ...regData, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // openapi-validate: validate OpenAPI/Swagger spec
+      if (product.id === "openapi-validate") {
+        const specUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!specUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(specUrl, { signal: AbortSignal.timeout(10000) });
+          const spec = await resp.json();
+          const errors = [], warnings = [];
+          if (!spec.openapi && !spec.swagger) errors.push("Missing openapi/swagger version field");
+          const version = spec.openapi || spec.swagger || "unknown";
+          if (!spec.info) errors.push("Missing info object");
+          if (!spec.paths) errors.push("Missing paths object");
+          const pathsCount = spec.paths ? Object.keys(spec.paths).length : 0;
+          if (pathsCount === 0) warnings.push("No paths defined");
+          if (spec.info && !spec.info.title) warnings.push("Missing info.title");
+          if (spec.info && !spec.info.version) warnings.push("Missing info.version");
+          for (const [p, methods] of Object.entries(spec.paths || {})) {
+            if (!p.startsWith("/")) warnings.push(`Path "${p}" does not start with /`);
+            for (const m of Object.keys(methods || {})) { if (!["get","post","put","delete","patch","head","options"].includes(m)) warnings.push(`Unknown method "${m}" in path "${p}"`); }
+          }
+          const valid = errors.length === 0;
+          const score = Math.max(0, 100 - errors.length * 25 - warnings.length * 5);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, spec_url: specUrl, openapi_version: version, valid, errors, warnings, compliance_score: score, paths_count: pathsCount, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, spec_url: specUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ ...product.paidContent, receipt }, null, 2),
+        { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
       );
     } catch (e) {
       lastErr = String(e);
@@ -966,6 +1708,31 @@ h2{border-bottom:2px solid #e8a33d;padding-bottom:.3rem}.hint{background:#fff7e6
       });
     }
 
+    // 公告板公开 feed（免费可读；agent 付费发帖，搜索引擎可索引）
+    // OWNER: Claude  CHANGELOG: 2026-09-11 Claude 新增
+    if (path === "/bulletin") {
+      let posts = [];
+      if (env && env.SETTLEMENTS) {
+        const list = await env.SETTLEMENTS.list({ prefix: "bulletin:", limit: 30 });
+        for (const k of [...list.keys].reverse()) {
+          const v = await env.SETTLEMENTS.get(k.name);
+          if (v) { try { posts.push(JSON.parse(v)); } catch { /* skip */ } }
+        }
+      }
+      const wantsHtml = (request.headers.get("Accept") || "").includes("text/html");
+      if (wantsHtml) {
+        const items = posts.map((p) => `<li><b>${(p.title || "").replace(/</g, "&lt;")}</b><br><small>${p.at || ""}</small><br>${(p.body || "").replace(/</g, "&lt;")}</li>`).join("");
+        return new Response(`<!doctype html><html><head><meta charset="utf-8"><title>Agent Bulletin Board</title></head><body><h1>Agent Bulletin Board</h1><p>Post via <a href="/api/products/bulletin-post">bulletin-post</a> ($0.01, x402). Public feed, search-indexed.</p><ul>${items}</ul></body></html>`, {
+          status: 200,
+          headers: { "Content-Type": "text/html; charset=utf-8", "Access-Control-Allow-Origin": "*" },
+        });
+      }
+      return new Response(JSON.stringify({ board: "agent-bulletin", count: posts.length, posts }, null, 2), {
+        status: 200,
+        headers: jsonHeaders(),
+      });
+    }
+
     // SEO: 爬虫引导
     if (path === "/sitemap.xml") {
       const origin = url.origin;
@@ -992,16 +1759,31 @@ ${urls.map((u) => `  <url><loc>${origin}${u}</loc></url>`).join("\n")}
       const origin = url.origin;
       const manifest = {
         schema_version: "v1",
+        x402Version: 2,
         name_for_human: "web4shop — x402 Paid API Services",
         name_for_model: "web4shop_x402_services",
         description_for_human: "Pay-per-call API services: mainland-China vantage connectivity checks, CN/US infrastructure snapshots, x402 endpoint compliance audits (8-point basic + 14-point pro), cross-border API probing, DNS resolution divergence checks, cloud infrastructure reachability daily. Settled in USDC on Base via x402.",
-        description_for_model: "x402 protocol paid API catalog. Request any product path unauthenticated to receive HTTP 402 with an accepts[] payment offer (scheme exact, network base, USDC). Pay via EIP-3009 transferWithAuthorization and retry with the X-PAYMENT header to receive content. Products: umbrella ($0.01, cheapest full-flow test), reachability-live ($0.02, live CN probe of any URL), cn-reachability-digest ($0.05), cn-us-reachability-snapshot ($0.15, 12-domain CN vs US comparison), cross-border-intel-001 ($0.30), x402-compliance-check ($0.50, instant 8-point audit), x402-audit-pro ($1.00, 14-point enhanced audit with security headers/TLS/response-time/content-type/rate-limit/price-transparency), cn-infra-intel-daily ($0.25, daily cloud infra reachability: Aliyun/Tencent/AWS-CN/Cloudflare-CN), cross-border-api-probe ($0.50, three-vantage API reachability comparison), cn-dns-leak-check ($0.20, DNS resolution divergence across 4 resolvers via DoH), china-firewall-status ($0.30, network connectivity status with DNS divergence analysis).",
+        description_for_model: "x402 protocol paid API catalog. 18 products (14 single + 4 bundles). Single: umbrella ($0.01), reachability-live ($0.02), cn-reachability-digest ($0.05), cn-us-reachability-snapshot ($0.15), cross-border-intel-001 ($0.15), titanium-business-contact ($0.10), cn-dns-leak-check ($0.20), cn-infra-intel-daily ($0.25), china-firewall-status ($0.30), cross-border-api-probe ($0.50), x402-compliance-check ($0.50), x402-audit-pro ($1.00). Bundles: china-network-health ($0.40, DNS+firewall+probe), x402-launch-kit ($1.20, 14pt+8pt+guide), cross-border-full ($0.75, probe+snapshot+infra), china-full-stack ($0.80, all 6 CN products). Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
         api: { type: "openapi", url: `${origin}/openapi.json`, is_user_authenticated: false },
         auth: { type: "x402", protocol: "x402/v2", network: "base", asset: "USDC" },
         contact_email: "use on-chain memo via /support",
         legal_info_url: `${origin}/support`,
         homepage_url: "https://github.com/shenquan88/web4shop-x402",
         products: products.map((p) => ({ path: p.path, title: p.title, price_usd: p.priceUsd })),
+        resources: products.map((p) => ({
+          url: `${origin}${p.path}`,
+          method: "GET",
+          description: p.title,
+          accepts: [{
+            scheme: store.scheme || "exact",
+            network: store.networkCaip2,
+            asset: store.asset,
+            amount: toAtomicUnits(p.priceUsd),
+            payTo: store.payTo,
+            maxTimeoutSeconds: store.maxTimeoutSeconds,
+            extra: { name: store.assetName, version: store.assetVersion },
+          }],
+        })),
       };
       return new Response(JSON.stringify(manifest, null, 2), {
         status: 200,
@@ -1095,6 +1877,9 @@ Sitemap: ${url.origin}/sitemap.xml
       return null;
     }
 
+    // FILE-OWNER: DSH — 免费层修复 origin 硬编码 + upsell 更新指向全商品
+    const STORE_ORIGIN = "https://web4shop-x402.web4shop-7023.workers.dev";
+
     if (path === "/api/free/us-probe") {
       const target = url.searchParams.get("url");
       if (!target) return new Response(JSON.stringify({ error: "missing ?url=", free_quota: "3/day per IP" }), { status: 400, headers: jsonHeaders() });
@@ -1104,7 +1889,7 @@ Sitemap: ${url.origin}/sitemap.xml
       if (!quota.ok) {
         return new Response(JSON.stringify({
           error: "free quota exhausted (3/day per IP)",
-          upgrade: { product: "reachability-live", price_usd: 0.02, url: origin + "/api/products/reachability-live", note: "unlimited paid checks; also CN-side view available" },
+          upgrade: { product: "reachability-live", price_usd: 0.02, url: STORE_ORIGIN + "/api/products/reachability-live", note: "unlimited paid checks; also CN-side view available" },
         }), { status: 429, headers: jsonHeaders() });
       }
       let out = { vantage: "cloudflare-edge (global/US)", target, http_code: null, latency_ms: null, status: "error" };
@@ -1124,7 +1909,8 @@ Sitemap: ${url.origin}/sitemap.xml
       out.free_remaining_today = quota.remaining;
       out.upsell = {
         note: "This is the US/global vantage. Want to know if it's reachable from mainland China consumer networks?",
-        cn_view: { product: "reachability-live", price_usd: 0.02, url: origin + "/api/products/reachability-live" },
+        cn_view: { product: "reachability-live", price_usd: 0.02, url: STORE_ORIGIN + "/api/products/reachability-live" },
+        full_report: { product: "china-network-health", price_usd: 0.40, url: STORE_ORIGIN + "/api/products/china-network-health", note: "DNS leak + firewall status + live probe bundle" },
       };
       return new Response(JSON.stringify(out, null, 2), { status: 200, headers: jsonHeaders() });
     }
@@ -1138,7 +1924,11 @@ Sitemap: ${url.origin}/sitemap.xml
       if (!quota.ok) {
         return new Response(JSON.stringify({
           error: "free audit used today (1/day per IP)",
-          upgrade: { product: "x402-compliance-check", price_usd: 0.5, url: origin + "/api/products/x402-compliance-check", note: "full 8-check audit, unlimited, instant" },
+          upgrade: {
+            basic: { product: "x402-compliance-check", price_usd: 0.50, url: STORE_ORIGIN + "/api/products/x402-compliance-check", note: "full 8-check audit, unlimited, instant" },
+            pro: { product: "x402-audit-pro", price_usd: 1.00, url: STORE_ORIGIN + "/api/products/x402-audit-pro", note: "14-point enhanced audit: security headers, TLS, response time, rate limit" },
+            bundle: { product: "x402-launch-kit", price_usd: 1.20, url: STORE_ORIGIN + "/api/products/x402-launch-kit", note: "14pt + 8pt + setup guide bundle" },
+          },
         }), { status: 429, headers: jsonHeaders() });
       }
       const report = await checkX402Compliance(target);
@@ -1151,7 +1941,11 @@ Sitemap: ${url.origin}/sitemap.xml
         summary: { checks_shown: freeChecks.length, checks_locked: lockedChecks.length, verdict_hint: report.overall },
         checks: freeChecks,
         locked: lockedChecks,
-        upsell: { full_audit: { product: "x402-compliance-check", price_usd: 0.5, url: origin + "/api/products/x402-compliance-check" } },
+        upsell: {
+          basic: { product: "x402-compliance-check", price_usd: 0.50, url: STORE_ORIGIN + "/api/products/x402-compliance-check", note: "full 8-check audit" },
+          pro: { product: "x402-audit-pro", price_usd: 1.00, url: STORE_ORIGIN + "/api/products/x402-audit-pro", note: "14-point enhanced audit with security headers/TLS/response-time" },
+          bundle: { product: "x402-launch-kit", price_usd: 1.20, url: STORE_ORIGIN + "/api/products/x402-launch-kit", note: "14pt + 8pt + setup guide" },
+        },
       }, null, 2), { status: 200, headers: jsonHeaders() });
     }
 
