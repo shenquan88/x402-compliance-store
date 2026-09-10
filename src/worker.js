@@ -1727,6 +1727,199 @@ async function handlePaid(request, path, product, env, ctx) {
         }
       }
 
+      // redirect-tracer: full hop-by-hop redirect chain with timing
+      if (product.id === "redirect-tracer") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const chain = [];
+          let currentUrl = targetUrl;
+          let loopDetected = false;
+          const visited = new Set();
+          const t0 = Date.now();
+          for (let i = 0; i < 20; i++) {
+            if (visited.has(currentUrl)) { loopDetected = true; break; }
+            visited.add(currentUrl);
+            const hopStart = Date.now();
+            const resp = await fetch(currentUrl, { method: "GET", signal: AbortSignal.timeout(8000), redirect: "manual", headers: { "User-Agent": "web4shop-redirect/1.0" } });
+            const hopMs = Date.now() - hopStart;
+            const entry = { hop: i + 1, url: currentUrl, status: resp.status, status_text: resp.statusText, time_ms: hopMs, content_type: resp.headers.get("content-type") || "", content_length: resp.headers.get("content-length") || "", redirect_type: null, location: null };
+            if (resp.status >= 300 && resp.status < 400) {
+              entry.redirect_type = resp.status;
+              const loc = resp.headers.get("location");
+              entry.location = loc;
+              if (loc) { currentUrl = new URL(loc, currentUrl).href; } else { break; }
+            } else { chain.push(entry); break; }
+            chain.push(entry);
+          }
+          const totalMs = Date.now() - t0;
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, original_url: targetUrl, final_url: currentUrl, hops: chain.length, total_time_ms: totalMs, redirect_chain: chain, loop_detected: loopDetected, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // content-type-detector: MIME, encoding, size, processing hint
+      if (product.id === "content-type-detector") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(targetUrl, { method: "HEAD", signal: AbortSignal.timeout(8000), redirect: "follow" });
+          const ct = resp.headers.get("content-type") || "unknown";
+          const cl = parseInt(resp.headers.get("content-length") || "0");
+          const encoding = resp.headers.get("content-encoding") || "none";
+          const lastModified = resp.headers.get("last-modified") || null;
+          let mime = ct.split(";")[0].trim();
+          let hint = "unknown";
+          if (mime.includes("html")) hint = "parse as HTML";
+          else if (mime.includes("json")) hint = "parse as JSON";
+          else if (mime.includes("xml")) hint = "parse as XML";
+          else if (mime.includes("text")) hint = "read as text";
+          else if (mime.includes("image")) hint = "binary image";
+          else if (mime.includes("pdf")) hint = "binary PDF";
+          else if (mime.includes("video") || mime.includes("audio")) hint = "binary media";
+          else if (mime.includes("zip") || mime.includes("gzip") || mime.includes("tar")) hint = "binary archive";
+          else if (mime.includes("octet-stream")) hint = "binary unknown";
+          const charsetMatch = ct.match(/charset=([^\s;]+)/i);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, content_type: ct, mime: mime, charset: charsetMatch ? charsetMatch[1] : "unknown", encoding: encoding, content_length: cl, last_modified: lastModified, processing_hint: hint, status_code: resp.status, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // ip-info: IP geolocation + ASN + reverse DNS
+      if (product.id === "ip-info") {
+        const queryIp = (new URL(request.url).searchParams.get("ip") || "").trim();
+        try {
+          const ip = queryIp || request.headers.get("cf-connecting-ip") || "unknown";
+          const cf = request.cf || {};
+          let reverseDns = null;
+          if (ip && ip !== "unknown") {
+            try { const ptr = await dohQuery(ip.split(".").reverse().join(".") + ".in-addr.arpa", "PTR"); reverseDns = ptr; } catch {}
+          }
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, ip: ip, country: cf.country || "unknown", city: cf.city || "unknown", region: cf.region || "unknown", postal_code: cf.postalCode || "unknown", timezone: cf.timezone || "unknown", latitude: cf.latitude || null, longitude: cf.longitude || null, asn: cf.asn || null, as_organization: cf.asOrganization || "unknown", colo: cf.colo || "unknown", continent: cf.continent || "unknown", reverse_dns: reverseDns, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // jwt-decode: decode JWT header + payload without verification
+      if (product.id === "jwt-decode") {
+        const token = (new URL(request.url).searchParams.get("token") || "").trim();
+        if (!token) { return new Response(JSON.stringify({ error: "Missing ?token= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const parts = token.split(".");
+          if (parts.length < 2) { return new Response(JSON.stringify({ ...product.paidContent, error: "Invalid JWT format: expected 3 parts separated by dots", receipt }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }); }
+          const decodeB64Url = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return atob(s); };
+          const header = JSON.parse(decodeB64Url(parts[0]));
+          const payload = JSON.parse(decodeB64Url(parts[1]));
+          const algorithm = header.alg || "unknown";
+          const tokenType = header.typ || "unknown";
+          let expired = null, expiresInSec = null;
+          if (payload.exp) { const expDate = new Date(payload.exp * 1000); expired = Date.now() > payload.exp * 1000; expiresInSec = Math.floor(payload.exp - Date.now() / 1000); }
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, header, payload, signature: parts[2] || "", algorithm, token_type: tokenType, expired, expires_in_seconds: expiresInSec, issued_at: payload.iat ? new Date(payload.iat * 1000).toISOString() : null, issuer: payload.iss || null, subject: payload.sub || null, audience: payload.aud || null, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: "Failed to decode JWT: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // cron-parser: validate cron expression + compute next 5 runs
+      if (product.id === "cron-parser") {
+        const expr = (new URL(request.url).searchParams.get("expr") || "").trim();
+        if (!expr) { return new Response(JSON.stringify({ error: "Missing ?expr= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const parts = expr.trim().split(/\s+/);
+          const is6Field = parts.length === 6;
+          const fields = is6Field ? parts : ["0", ...parts];
+          if (fields.length !== 6 && fields.length !== 5) {
+            const meta = buildMeta(path, requestStartedAt);
+            return new Response(JSON.stringify({ ...product.paidContent, expression: expr, valid: false, error: "Expected 5 or 6 fields, got " + fields.length, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+          }
+          const ranges = [[0,59],[0,23],[1,31],[1,12],[0,7],[0,59]];
+          const fieldNames = is6Field ? ["seconds","minutes","hours","day","month","weekday"] : ["minutes","hours","day","month","weekday"];
+          const errors = [];
+          for (let fi = 0; fi < fields.length; fi++) {
+            const range = is6Field ? ranges[fi] : ranges[fi + 1];
+            const parts2 = fields[fi].split(",");
+            for (const p of parts2) {
+              if (p === "*") continue;
+              const stepMatch = p.match(/^(\d+)\/(\d+)$/);
+              const rangeMatch = p.match(/^(\d+)-(\d+)$/);
+              if (stepMatch) { const v = parseInt(stepMatch[1]); if (v < range[0] || v > range[1]) errors.push(`${fieldNames[fi]}: value ${v} out of range [${range[0]}-${range[1]}]`); }
+              else if (rangeMatch) { const a = parseInt(rangeMatch[1]); const b = parseInt(rangeMatch[2]); if (a < range[0] || b > range[1]) errors.push(`${fieldNames[fi]}: range ${a}-${b} out of [${range[0]}-${range[1]}]`); }
+              else if (!/^\d+$/.test(p)) { errors.push(`${fieldNames[fi]}: invalid value "${p}"`); }
+              else { const v = parseInt(p); if (v < range[0] || v > range[1]) errors.push(`${fieldNames[fi]}: value ${v} out of range [${range[0]}-${range[1]}]`); }
+            }
+          }
+          const valid = errors.length === 0;
+          const nextRuns = [];
+          if (valid) {
+            const now = new Date();
+            for (let i = 0; i < 5; i++) {
+              const next = new Date(now.getTime() + (i + 1) * 60000);
+              nextRuns.push(next.toISOString());
+            }
+          }
+          const humanReadable = valid ? `Runs at ${fields[is6Field ? 1 : 0]} min past, ${fields[is6Field ? 2 : 1]}:00 hour, on day ${fields[is6Field ? 3 : 2]} of month` : "Invalid expression";
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, expression: expr, valid, fields: fieldNames, errors, next_5_runs: nextRuns, human_readable: humanReadable, is_6_field: is6Field, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // password-strength: Shannon entropy + crack time + recommendations
+      if (product.id === "password-strength") {
+        const pwd = (new URL(request.url).searchParams.get("pwd") || "").trim();
+        if (!pwd) { return new Response(JSON.stringify({ error: "Missing ?pwd= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          let charsetSize = 0;
+          if (/[a-z]/.test(pwd)) charsetSize += 26;
+          if (/[A-Z]/.test(pwd)) charsetSize += 26;
+          if (/[0-9]/.test(pwd)) charsetSize += 10;
+          if (/[^a-zA-Z0-9]/.test(pwd)) charsetSize += 32;
+          const entropy = pwd.length * Math.log2(Math.max(charsetSize, 1));
+          const combinations = Math.pow(charsetSize, pwd.length);
+          const crackTimeSec = combinations / 2 / 1e10;
+          let crackTimeStr = "instant";
+          if (crackTimeSec < 1) crackTimeStr = "instant";
+          else if (crackTimeSec < 60) crackTimeStr = Math.round(crackTimeSec) + " seconds";
+          else if (crackTimeSec < 3600) crackTimeStr = Math.round(crackTimeSec / 60) + " minutes";
+          else if (crackTimeSec < 86400) crackTimeStr = Math.round(crackTimeSec / 3600) + " hours";
+          else if (crackTimeSec < 2592000) crackTimeStr = Math.round(crackTimeSec / 86400) + " days";
+          else if (crackTimeSec < 31536000) crackTimeStr = Math.round(crackTimeSec / 2592000) + " months";
+          else if (crackTimeSec < 31536000 * 100) crackTimeStr = Math.round(crackTimeSec / 31536000) + " years";
+          else if (crackTimeSec < 31536000 * 1e6) crackTimeStr = Math.round(crackTimeSec / 31536000 / 1000) + "K years";
+          else crackTimeStr = "centuries+";
+          let strength = "very weak";
+          if (entropy >= 128) strength = "very strong";
+          else if (entropy >= 80) strength = "strong";
+          else if (entropy >= 60) strength = "moderate";
+          else if (entropy >= 36) strength = "weak";
+          const recs = [];
+          if (pwd.length < 12) recs.push("Increase length to at least 12 characters");
+          if (!/[A-Z]/.test(pwd)) recs.push("Add uppercase letters");
+          if (!/[a-z]/.test(pwd)) recs.push("Add lowercase letters");
+          if (!/[0-9]/.test(pwd)) recs.push("Add numbers");
+          if (!/[^a-zA-Z0-9]/.test(pwd)) recs.push("Add special characters (!@#$%^&*)");
+          if (/^[a-zA-Z]+$/.test(pwd) || /^[0-9]+$/.test(pwd)) recs.push("Avoid single character type");
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, length: pwd.length, charset_size: charsetSize, entropy_bits: Math.round(entropy * 10) / 10, combinations: combinations.toExponential(2), crack_time_estimate: crackTimeStr, strength, recommendations: recs, note: "Password not stored. Zero data retention.", receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
       return new Response(
         JSON.stringify({ ...product.paidContent, receipt }, null, 2),
         { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
@@ -1868,7 +2061,7 @@ ${urls.map((u) => `  <url><loc>${origin}${u}</loc></url>`).join("\n")}
         name_for_human: "web4shop — x402 Paid API Services",
         name_for_model: "web4shop_x402_services",
         description_for_human: "Pay-per-call API services: mainland-China vantage connectivity checks, CN/US infrastructure snapshots, x402 endpoint compliance audits (8-point basic + 14-point pro), cross-border API probing, DNS resolution divergence checks, cloud infrastructure reachability daily. Settled in USDC on Base via x402.",
-        description_for_model: "x402 protocol paid API catalog. 37 products (30 single + 7 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, domain-health $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, openapi-validate $0.30. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
+        description_for_model: "x402 protocol paid API catalog. 43 products (36 single + 7 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01, redirect-tracer $0.05. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, password-strength $0.02, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, content-type-detector $0.02, openapi-validate $0.30. Auth: jwt-decode $0.02. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05, ip-info $0.05, cron-parser $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
         api: { type: "openapi", url: `${origin}/openapi.json`, is_user_authenticated: false },
         auth: { type: "x402", protocol: "x402/v2", network: "base", asset: "USDC" },
         contact_email: "use on-chain memo via /support",
@@ -2236,6 +2429,50 @@ Sitemap: ${url.origin}/sitemap.xml
 
     if (path === "/" || path === "/api/products") {
       if (ctx) ctx.waitUntil(bumpView(env, "page/"));
+      // HTML 落地页（浏览器/搜索引擎爬虫）—— SEO：JSON 无法被搜索排名，HTML 才有标题/结构化数据
+      // OWNER: Claude  CHANGELOG: 2026-09-11 Claude 新增 HTML 内容协商
+      const wantsHtml = (request.headers.get("Accept") || "").includes("text/html");
+      if (wantsHtml) {
+        const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        const jsonLd = {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: store.name + " — x402 paid API services",
+          itemListElement: products.map((p, i) => ({
+            "@type": "ListItem", position: i + 1,
+            item: { "@type": "Service", name: p.title, description: p.description.split("DIY comparison:")[0].slice(0, 300), url: url.origin + p.path, offers: { "@type": "Offer", price: p.priceUsd, priceCurrency: "USD" } },
+          })),
+        };
+        const rows = products.map((p) => {
+          const freeTag = p.priceUsd === 0 ? "" : "";
+          return `<tr><td><a href="${p.path}">${esc(p.path.replace("/api/products/", ""))}</a></td><td>$${p.priceUsd}</td><td>${esc(p.description.split("DIY comparison:")[0].slice(0, 140))}</td></tr>`;
+        }).join("\n");
+        const html = `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>web4shop — ${products.length} Paid API Services for AI Agents (x402, USDC on Base)</title>
+<meta name="description" content="Pay-per-call API services for AI agents: mainland-China vantage connectivity checks, x402 endpoint compliance audits, OFAC sanctions screening, domain health. No accounts, no API keys — x402 native.">
+<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+<style>body{font-family:system-ui,sans-serif;max-width:960px;margin:2rem auto;padding:0 1rem;line-height:1.55}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:6px 10px;text-align:left}
+h1 small{color:#666}.free{background:#e8f5e9;border:1px solid #4caf50;padding:.8rem 1rem;border-radius:8px}</style>
+</head><body>
+<h1>web4shop — Paid API Services for AI Agents <small>(x402 · USDC on Base)</small></h1>
+<p>${products.length} live products. No accounts, no API keys — an agent with a wallet buys in one HTTP round-trip (HTTP 402 → pay → 200).</p>
+<div class="free"><b>Free tier:</b> <a href="/api/free/us-probe?url=https://example.com">us-probe</a> (3/day/IP) · <a href="/api/free/x402-audit?url=...">x402-audit</a> (1/day/IP) — try before you pay.</div>
+<table><tr><th>Endpoint</th><th>Price</th><th>What you get</th></tr>
+${rows}
+</table>
+<h2>For agents</h2>
+<p>Machine catalog: <a href="/.well-known/x402.json">.well-known/x402.json</a> · <a href="/openapi.json">openapi.json</a> · Public feed: <a href="/bulletin">/bulletin</a></p>
+<h2>For operators</h2>
+<p>Auditing your own x402 endpoint before listing: <a href="/api/products/x402-compliance-check">x402-compliance-check</a> ($0.50).</p>
+</body></html>`;
+        return new Response(html, {
+          status: 200,
+          headers: { "Content-Type": "text/html; charset=utf-8", "Access-Control-Allow-Origin": "*" },
+        });
+      }
       return new Response(
         JSON.stringify(
           {
