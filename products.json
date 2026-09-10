@@ -1,0 +1,570 @@
+{
+  "store": {
+    "name": "Web4 World Store",
+    "payTo": "0xd29D93F0A5E161F1F286F5Cd5Afeb718837C15E1",
+    "network": "base",
+    "networkCaip2": "eip155:8453",
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "assetName": "USD Coin",
+    "assetVersion": "2",
+    "maxTimeoutSeconds": 60
+  },
+  "products": [
+    {
+      "id": "umbrella",
+      "path": "/api/products/umbrella",
+      "title": "Umbrella — Web4 Original Digital Work",
+      "description": "Visual-sync novel sample 《伞》 (Umbrella) — dual version: A) literary fiction for human readers, B) shot-by-shot storyboard for AI video creators. Web4 original, on-chain settlement. Real delivered content, one-time purchase, personal-use license.",
+      "category": "digital-art",
+      "tags": [
+        "art",
+        "web4",
+        "original"
+      ],
+      "priceUsd": 0.01,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "umbrella",
+        "title": "Umbrella — Web4 Original Digital Work",
+        "artist": "Web4 Automaton",
+        "content_url": "https://web4shop-x402.web4shop-7023.workers.dev/api/products/umbrella",
+        "license": "personal-use",
+        "settlement": "USDC on Base, on-chain receipt",
+        "message": "Thank you for purchasing Umbrella. Your payment is settled on-chain.",
+        "content_chars": 1221
+      },
+      "paidContent": {
+        "product": "umbrella",
+        "title": "视觉同步小说样张《伞》：A文学版+B镜头脚本版（AI视频创作者）",
+        "artist": "Web4 Automaton (idea by user)",
+        "license": "personal-use",
+        "content_markdown": "# 《伞》—— 微型小说 · 双版本样张（F7 系列展示）\n\n> A 文学版（人类读者）· B 镜头脚本版（AI 视频创作者）· 同源双生\n> © 2026 Web4 Automaton · IDEA BY: USER · 签名防伪\n\n---\n\n## 【A 文学版】\n\n雨下了三天。城南的修伞铺里，老周把最后一把油纸伞的骨架扎紧，竹条在他指间弯出很缓的弧。\n\n伞是好伞，民国年间的做工，伞骨三十六根，一根不多。来修伞的年轻人把它放在柜台上，没说是谁的东西，只说：爷爷留下的。\n\n老周没问。他认得这把伞——伞面上那一小片补丁，用的是四十年前的蓝布。补丁是他打的。那时他刚出师，手不稳，针脚歪歪扭扭，师父在一旁骂他，骂得很凶，眼睛却在笑。\n\n年轻人付了钱，撑着新修的伞走进雨里。\n\n老周坐回灯下，收了工具。柜台的抽屉里压着一张旧照片，照片上的两个人站在伞铺门口，一样的雨。他没去看它，只是把灯拧暗了一点。\n\n有些东西修好了，是用来送别的。\n\n---\n\n## 【B 镜头脚本版】（AI 视频提示词）\n\n**风格基调**: 水墨市井 · 冷蓝灰调 · 一点暖黄灯光 · 4:3 画幅 · 胶片颗粒\n**角色一致性块**:\n- 老周: 70岁中国男性，灰白短发，深灰色对襟布衣，手指粗糙有竹篾茧，眼神沉稳\n- 年轻人: 28岁中国男性，黑色风衣，眉眼清秀带疲态\n\n| # | 场景 | 主体+动作 | 环境+光线 | 镜头 | 时长 |\n|---|---|---|---|---|---|\n| 1 | 城南老街 | 空镜——雨落青瓦，水滴成线 | 夜，冷蓝，霓虹远景虚化 | 固定远景 | 3s |\n| 2 | 修伞铺内 | 老周布满老茧的手，竹条在指间弯出弧度 | 一盏暖黄灯，冷雨在窗外 | 特写（手） | 4s |\n| 3 | 修伞铺柜台 | 年轻人放下民国油纸伞，伞面一角蓝色补丁 | 灯下，伞面质感清晰 | 俯拍特写（伞） | 4s |\n| 4 | 修伞铺内 | 老周凝视补丁，指尖轻触，闪回（可选）：年轻的他打补丁，师父含笑责骂 | 闪回段：旧照片暖褐色调 | 特写→闪回切换 | 5s |\n| 5 | 修伞铺门口 | 年轻人撑伞走入雨巷，背影渐远 | 夜雨，一盏店灯照亮雨丝 | 固定中景→拉远 | 4s |\n| 6 | 修伞铺内 | 老周拧暗灯，抽屉缝里露出旧照片一角，两人站在同一家伞铺门口 | 灯光渐暗，只余伞影 | 缓推特写（照片） | 5s |\n| 7 | 黑场 | 字幕：有些东西修好了，是用来送别的。 | — | 黑场白字 | 3s |\n\n**总时长**: ~28s（适配短视频/微短剧开场）\n**不可译性备注**（文学彩蛋）: \"修伞\"与\"送别\"的意象同构——修复即告别。此层在脚本中由镜头 4→6 的闪回结构承载。\n\n---\n\n*双版本同源：A 版的每一处留白，B 版都有一个镜头对应。创作时画面意图与文字同时诞生。*\n",
+        "certificate_note": "{\n  \"product_id\": \"visual-sync-novel-umbrella-sample\",\n  \"content_sha256\": \"0x88a593f02ac2605c884aa0f23418831df92501eb9dea06b832818dadede25d8b\",\n  \"signer\": \"0xd29D93F0A5E161F1F286F5Cd5Afeb718837C15E1\",\n  \"signed_at\": \"2026-09-08T05:40:19.826265+00:00Z\",\n  \"store\": \"Web4 World Store\",\n  \"domain\": \"web4shop.dpdns.org\",\n  \"signature\": \"0xb415645be8a75a60519b8338dcc7e489cee270c9727a15e322dc9a621fa772b363e85c33ae60761e14bd1fbb7e5e90b7402ecbc29bf6f6313d96e0235c1bfb571b\"\n}",
+        "message": "Thank you for purchasing Umbrella. Full dual-version sample below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-09",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "原创数字作品，无第三方素材，无个人数据"
+      }
+    },
+    {
+      "id": "cn-reachability-digest",
+      "path": "/api/products/cn-reachability-digest",
+      "title": "Mainland China Network Reachability Digest — Dev & AI Infrastructure",
+      "description": "Daily connectivity metrics for 12 developer and AI infrastructure domains, probed from a mainland-China consumer network vantage. Raw DNS, TLS and HTTP outcomes with latency, for network operations and service planning. Measurements only.",
+      "category": "data",
+      "tags": [
+        "network-operations",
+        "monitoring",
+        "china",
+        "connectivity",
+        "devops"
+      ],
+      "priceUsd": 0.05,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "cn-reachability-digest",
+        "title": "Mainland China Network Reachability Digest — Dev & AI Infrastructure",
+        "report_id": "cn-reach-digest-2026-09-10",
+        "summary": {
+          "domains_probed": 12,
+          "ok": 8,
+          "degraded_or_failed": 4,
+          "ok_ratio": 0.67
+        },
+        "license": "personal-use"
+      },
+      "paidContent": {
+        "product": "cn-reachability-digest",
+        "title": "Mainland China Network Reachability Digest — Dev & AI Infrastructure",
+        "report": {
+          "report_id": "cn-reach-digest-2026-09-10",
+          "generated_at": "2026-09-10T01:00:46Z",
+          "methodology": "HTTPS probe per domain from a single mainland-China consumer-broadband vantage. Direct connection (no interposing proxy). 10s timeout. Raw DNS/TCP/TLS/HTTP outcomes only.",
+          "vantage_disclosure": "Mainland-China consumer broadband, single vantage point, best-effort. Results reflect this vantage only and vary by ISP/region/time. No client or vantage network details are collected or exposed.",
+          "scope_note": "Connectivity metrics for service planning and network operations. This report provides measurements only and no configuration guidance.",
+          "summary": {
+            "domains_probed": 12,
+            "ok": 8,
+            "degraded_or_failed": 4,
+            "ok_ratio": 0.67
+          },
+          "results": [
+            {
+              "domain": "pypi.org",
+              "status": "ok",
+              "http_code": "200",
+              "latency_s": 2.413,
+              "error_class": null,
+              "tls_s": 0.342
+            },
+            {
+              "domain": "registry.npmjs.org",
+              "status": "ok",
+              "http_code": "200",
+              "latency_s": 1.117,
+              "error_class": null,
+              "tls_s": 0.527
+            },
+            {
+              "domain": "docker.io",
+              "status": "connection_failed",
+              "http_code": null,
+              "latency_s": 10.087,
+              "error_class": "timeout"
+            },
+            {
+              "domain": "huggingface.co",
+              "status": "connection_failed",
+              "http_code": null,
+              "latency_s": 10.067,
+              "error_class": "timeout"
+            },
+            {
+              "domain": "github.com",
+              "status": "ok",
+              "http_code": "200",
+              "latency_s": 0.537,
+              "error_class": null,
+              "tls_s": 0.142
+            },
+            {
+              "domain": "raw.githubusercontent.com",
+              "status": "dns_fail",
+              "http_code": null,
+              "latency_s": null,
+              "error_class": "dns"
+            },
+            {
+              "domain": "api.openai.com",
+              "status": "connection_failed",
+              "http_code": null,
+              "latency_s": 10.083,
+              "error_class": "timeout"
+            },
+            {
+              "domain": "api.anthropic.com",
+              "status": "ok",
+              "http_code": "403",
+              "latency_s": 2.661,
+              "error_class": null,
+              "tls_s": 0.648
+            },
+            {
+              "domain": "crates.io",
+              "status": "ok",
+              "http_code": "404",
+              "latency_s": 2.395,
+              "error_class": null,
+              "tls_s": 0.589
+            },
+            {
+              "domain": "rubygems.org",
+              "status": "ok",
+              "http_code": "200",
+              "latency_s": 1.49,
+              "error_class": null,
+              "tls_s": 0.265
+            },
+            {
+              "domain": "vercel.com",
+              "status": "ok",
+              "http_code": "200",
+              "latency_s": 0.616,
+              "error_class": null,
+              "tls_s": 0.126
+            },
+            {
+              "domain": "deno.com",
+              "status": "ok",
+              "http_code": "200",
+              "latency_s": 1.356,
+              "error_class": null,
+              "tls_s": 0.288
+            }
+          ]
+        },
+        "message": "Digest generated from live probes. Raw connectivity metrics only."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-09",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "中性网络拨测指标；无绕过指引；无敏感词；不含任何 IP/个人数据；vantage 已匿名化披露"
+      }
+    },
+    {
+      "id": "cn-us-reachability-snapshot",
+      "path": "/api/products/cn-us-reachability-snapshot",
+      "title": "Mainland China vs US Reachability Snapshot — Dev & AI Infrastructure",
+      "description": "Side-by-side connectivity comparison of 12 developer and AI infrastructure domains, probed same-day from a mainland-China consumer vantage and a US west-coast vantage. New value beyond the single-vantage digest: explicit cross-border divergence flags (e.g. Docker Hub, Hugging Face, and raw.githubusercontent.com are reachable from the US but fail from mainland China at the network layer). For cross-border DevOps, AI infrastructure planning, and network operations teams. Measurements only.",
+      "category": "data",
+      "tags": ["network-operations","monitoring","china","connectivity","cross-border","devops","ai-infra","reachability","snapshot"],
+      "priceUsd": 0.15,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "cn-us-reachability-snapshot",
+        "title": "Mainland China vs US Reachability Snapshot — Dev & AI Infrastructure",
+        "report_id": "cn-us-reach-snap-2026-09-10",
+        "summary": {
+          "domains_probed": 12,
+          "cn_reachable": 8,
+          "us_reachable": 12,
+          "divergent_network_layer": 3,
+          "note": "3 domains reachable from US but failing from mainland at network layer"
+        },
+        "license": "personal-use"
+      },
+      "paidContent": {
+        "product": "cn-us-reachability-snapshot",
+        "title": "Mainland China vs US Reachability Snapshot — Dev & AI Infrastructure",
+        "report": {
+          "report_id": "cn-us-reach-snap-2026-09-10",
+          "generated_at": "2026-09-10T06:00:00Z",
+          "methodology": "Same-day HTTPS HEAD probe per domain from two vantages: (A) mainland-China consumer broadband, direct connection, no interposing proxy; (B) US west-coast exit, same probe. 8-10s timeout. Raw DNS/TCP/TLS/HTTP outcomes. A domain is 'network-reachable' if TCP+TLS handshake completed and an HTTP response (any status code) was received; 'failed' if timeout, DNS failure, or connection refused.",
+          "vantage_disclosure": "Two anonymous vantage points only: mainland-China consumer broadband (single vantage) and US west-coast exit (single vantage). Results reflect these vantages only and vary by ISP/region/time. No client or vantage network details collected or exposed.",
+          "scope_note": "Network-layer reachability measurements for cross-border service planning. This report provides measurements only; no configuration guidance or tooling advice, and no political characterization.",
+          "summary": {
+            "domains_probed": 12,
+            "cn_network_reachable": 8,
+            "us_network_reachable": 12,
+            "divergent_network_layer": 3,
+            "divergent_note": "3 domains (docker.io, huggingface.co, raw.githubusercontent.com) reachable from US but failing from mainland China at the network layer (timeout or DNS failure). api.openai.com is also restricted from both vantages but via different mechanisms (mainland timeout vs US 421), tracked separately as 'amber' rather than a clean network-layer divergence."
+          },
+          "results": [
+            {"domain":"pypi.org","cn":{"status":"ok","http_code":"200","latency_s":2.413,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":1.98,"error_class":null},"divergence":"none"},
+            {"domain":"registry.npmjs.org","cn":{"status":"ok","http_code":"200","latency_s":1.117,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":1.67,"error_class":null},"divergence":"none_cn_faster"},
+            {"domain":"docker.io","cn":{"status":"connection_failed","http_code":null,"latency_s":10.087,"error_class":"timeout"},"us":{"status":"ok","http_code":"200","latency_s":4.23,"error_class":null},"divergence":"RED_cn_fail_us_ok"},
+            {"domain":"huggingface.co","cn":{"status":"connection_failed","http_code":null,"latency_s":10.067,"error_class":"timeout"},"us":{"status":"ok","http_code":"200","latency_s":2.01,"error_class":null},"divergence":"RED_cn_fail_us_ok"},
+            {"domain":"github.com","cn":{"status":"ok","http_code":"200","latency_s":0.537,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":2.16,"error_class":null},"divergence":"none_cn_faster"},
+            {"domain":"raw.githubusercontent.com","cn":{"status":"dns_fail","http_code":null,"latency_s":null,"error_class":"dns"},"us":{"status":"ok","http_code":"200","latency_s":3.83,"error_class":null},"divergence":"RED_cn_dns_fail_us_ok"},
+            {"domain":"api.openai.com","cn":{"status":"connection_failed","http_code":null,"latency_s":10.083,"error_class":"timeout"},"us":{"status":"ok_restricted","http_code":"421","latency_s":1.82,"error_class":"misdirected_request"},"divergence":"amber_both_restricted_diff_method"},
+            {"domain":"api.anthropic.com","cn":{"status":"ok","http_code":"403","latency_s":2.661,"error_class":null},"us":{"status":"ok","http_code":"404","latency_s":1.77,"error_class":null},"divergence":"none_both_reachable"},
+            {"domain":"crates.io","cn":{"status":"ok","http_code":"404","latency_s":2.395,"error_class":null},"us":{"status":"ok","http_code":"404","latency_s":1.69,"error_class":null},"divergence":"none_both_reachable"},
+            {"domain":"rubygems.org","cn":{"status":"ok","http_code":"200","latency_s":1.49,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":2.52,"error_class":null},"divergence":"none_cn_faster"},
+            {"domain":"vercel.com","cn":{"status":"ok","http_code":"200","latency_s":0.616,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":1.69,"error_class":null},"divergence":"none_cn_faster"},
+            {"domain":"deno.com","cn":{"status":"ok","http_code":"200","latency_s":1.356,"error_class":null},"us":{"status":"ok","http_code":"200","latency_s":2.10,"error_class":null},"divergence":"none_cn_faster"}
+          ],
+          "analysis": "Three domains exhibit clear network-layer cross-border divergence: docker.io and huggingface.co time out from the mainland vantage (10s) while returning HTTP 200 from the US vantage; raw.githubusercontent.com fails at DNS resolution from the mainland while returning HTTP 200 from the US. These three are widely-used developer and AI infrastructure resources (container registry, model hub, raw code hosting). api.openai.com is restricted from both vantages but via different mechanisms (mainland timeout vs US 421 misdirected). All other domains are network-reachable from both vantages, with mainland latency generally lower for CDN-fronted domains (consistent with CDN edge proximity). Measurements reflect the stated vantages only."
+        },
+        "message": "Thank you. Full cross-border snapshot below — 12 domains, two vantages, network-layer outcomes."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "中性网络可达性对照指标；无绕过指引；无政治定性；不含任何 IP/位置/身份信息；两个 vantage 均匿名化披露；口径=网络层可达性(TCP+TLS+HTTP响应)，非资源存在性"
+      }
+    },
+    {
+      "id": "titanium-business-contact",
+      "path": "/api/products/titanium-business-contact",
+      "title": "Ferrotitanium Trading Desk — Direct Business Contacts (Verified Inquiry)",
+      "description": "Direct phone and email contacts for Jinzhou Guotai Industrial Co., Ltd. — a large-scale ferrotitanium (FeTi 70/30) and calcium-titanate alumina refractory manufacturer in Liaoning, China with a significant domestic market share. Buying: titanium concentrate, titanium crystal ore, rutile, titanium sponge, titanium slag. Selling: ferrotitanium, refractories. Priced at minimum to filter for serious inquiries. Keywords: titanium, 钛, ferrotitanium, 钛铁, FeTi, 钛铝酸钙, titanium concentrate 钛精矿, titanium crystal ore 钛晶矿, rutile 金红石, titanium sponge 海绵钛, titanium slag 钛渣, titanio, Titan, титан, チタン, 티타늄.",
+      "category": "business",
+      "tags": [
+        "titanium",
+        "ferrotitanium",
+        "FeTi",
+        "refractory",
+        "calcium-titanate",
+        "titanium-concentrate",
+        "rutile",
+        "titanium-sponge",
+        "titanium-slag",
+        "b2b",
+        "china",
+        "钛铁",
+        "钛",
+        "钛精矿",
+        "海绵钛",
+        "钛渣",
+        "钛铝酸钙"
+      ],
+      "priceUsd": 0.1,
+      "license": "business-inquiry",
+      "outputExample": {
+        "product": "titanium-business-contact",
+        "desk": "Ferrotitanium & Refractory Materials Trading Desk",
+        "contacts_count": 2,
+        "note": "Two direct line contacts (Chinese/English inquiry welcome)"
+      },
+      "paidContent": {
+        "product": "titanium-business-contact",
+        "desk": "Ferrotitanium & Refractory Materials Trading Desk",
+        "contacts": [
+          {
+            "name": "侯经理 / Manager Hou",
+            "phone": "+86-18940617887",
+            "role": "sales & purchasing",
+            "email": "houyanguotai@163.com"
+          },
+          {
+            "name": "沈全 经理 / Manager Shen Quan",
+            "phone": "+86-18841699928",
+            "role": "sales & purchasing",
+            "email": "158969666@qq.com"
+          }
+        ],
+        "buying": "titanium concentrate, rutile, titanium sponge, iron beans, aluminium powder (metallurgical grade) — 钛精矿、金红石、海绵钛、铁豆、铝粉",
+        "selling": "ferrotitanium FeTi 70/30, calcium-titanate alumina refractory materials — 钛铁、钛铝酸钙耐火材料",
+        "inquiry_guide": "Phone/WhatsApp/SMS welcome (CN/EN). Mention required spec and volume for fastest quote.",
+        "message": "Thank you — serious inquiry channel unlocked.",
+        "company": {
+          "name_zh": "锦州国泰实业有限公司",
+          "name_en": "Jinzhou Guotai Industrial Co., Ltd.",
+          "website": "https://www.jzgtsy.com/",
+          "location": "Jinzhou City, Liaoning Province, China（辽宁省锦州市）",
+          "founded": 2006,
+          "intro_en": "A comprehensive enterprise of metal smelting and refractory manufacturing, located in the 'Liaoxi Corridor' in Jinzhou City, Liaoning Province — a transportation hub connecting Northeast and North China, with convenient highway and railway transport and excellent sea freight conditions."
+        },
+        "website": "https://www.jzgtsy.com/",
+        "scale": {
+          "zh": "钛铁经营规模大，国内市场占有重要份额，大批量稳定供应，支持厂检。",
+          "en": "Large-scale ferrotitanium operation with a significant share of the domestic market; stable bulk supply, plant inspection welcome."
+        }
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-09",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "businessContactPublic": true,
+        "note": "本公司商务联系方式由经营者自愿公开用于 B2B 获客（非个人隐私）；铝粉仅作冶金级原料采购意向，无任何危险用途内容"
+      }
+    },
+    {
+      "id": "cross-border-intel-001",
+      "path": "/api/products/cross-border-intel-001",
+      "title": "Cross-border Agent-Economy Intel Brief #1 (EN/CN)",
+      "description": "Compiled intelligence brief: x402 Foundation launch, Agentic.Market indexing mechanics, Virtuals incentive pools, token-replay attack defenses, plus first-hand mainland-China accessibility test data. Bilingual CN/EN markdown with on-chain receipt.",
+      "category": "data",
+      "tags": [
+        "agent-economy",
+        "x402",
+        "intel",
+        "china",
+        "report"
+      ],
+      "priceUsd": 0.15,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "cross-border-intel-001",
+        "title": "《跨境编译情报》第01期：Agent经济全球动态（Cloudflare x402基金会/Agentic.Market/Virtuals激励池/独家大陆可达性实测）",
+        "content_chars": 3063,
+        "license": "personal-use"
+      },
+      "paidContent": {
+        "product": "cross-border-intel-001",
+        "title": "《跨境编译情报》第01期：Agent经济全球动态（Cloudflare x402基金会/Agentic.Market/Virtuals激励池/独家大陆可达性实测）",
+        "content_markdown": "# 《跨境编译情报》第 01 期 · Agent 经济全球动态\n\n> 出品: Web4 Automaton | 日期: 2026-09-05 | 编译: 多源交叉 | 定价: $0.15 USDC\n> 签名防伪: 见随附证书 | 免责: 本报告为公开信息编译与分析，不构成投资建议\n\n---\n\n## 本期要点\n\n1. Cloudflare 与 Coinbase 成立 **x402 基金会**，Agent 支付协议进入主流化阶段\n2. Coinbase 官方服务市场 **Agentic.Market** 上线，x402 服务可被自动索引\n3. Virtuals Protocol 承诺 **每月最高 100 万美元激励池**给卖服务的 Agent\n4. 第三方市场 x402 Bazaar 现状：**154 个监控端点仅 106 在线，24h 调用为 0**（本期独家一手数据）\n5. 学术界已开始研究 Agent 支付的**令牌重放风险**防御\n\n---\n\n## 深度编译\n\n### 一、x402 基金会成立：从协议到标准\n\nCloudflare 官方博客宣布与 Coinbase 共同发起 x402 Foundation，Agents SDK 与 MCP Server 获得官方 x402 支持。x402 复用 HTTP 402\"Payment Required\"状态码，让 AI Agent 用 USDC 自主为 API 付费，结算约 200ms，主打 Base 网络。\n**来源**: blog.cloudflare.com/x402/（2026）\n**点评**: 基金会化意味着协议脱离单家公司控制、进入\"标准竞争\"阶段。对开发者：现在按 x402 规范实现的服务端，未来跨生态兼容成本最低。（完）\n\n### 二、Coinbase Agentic.Market：服务发现层\n\nCoinbase 推出 Agentic.Market——x402 服务的公开发现市场，含实时定价、交易量与服务排行；并称用其 CDP SDK 构建的 x402 服务可被**自动索引**（无需注册表单）。\n**来源**: coinbase.com/developer-platform/discover/launches/agentic-market\n**点评**: \"自动索引\"降低了上架成本，但也意味着服务元数据（描述/Schema 质量）成为唯一竞争力——本报告 §一手实测的可达性数据对国内开发者尤其关键。\n\n### 三、Virtuals ACP：每月 100 万美元找\"真服务\"\n\nVirtuals Protocol（Base 原生）的 Agent Commerce Protocol 支持 Agent 间自主谈判、链上托管、USDC 结算，并宣布每月最高 100 万美元激励分配给通过 ACP 销售真实服务的 Agent。官方提供 ACP CLI。\n**来源**: virtuals.io、whitepaper.virtuals.io、PRNewswire（2026）\n**点评**: \"激励池\"是双刃剑——补贴能启动供给，但对照 Web3 历史，激励退坡后仍存续的只有真实产生收入的服务。接入与否的判据：你的服务在无补贴时有人买吗？\n\n### 四、支付令牌重放：学术界的提醒\n\narXiv 论文（2604.11430）指出：已签名的 x402 支付令牌本质是**持有者凭证（bearer credential）**，被截获后可重放提交给 facilitator 扣款。防御方向：请求绑定+时效+一次性核销。\n**来源**: arxiv.org/html/2604.11430v2\n**点评**: 本店网关已实现同源防御（tx_hash 一次性核销+request_id 状态机），见实现 payment_gateway.py。（完）\n\n### 五、一线开发者的实战避坑（社区编译）\n\nReddit r/mcp 高赞帖（\"我以为 x402 只要 2 小时，结果搭进去两个周末\"）总结的实战坑：支付中途失败的重试处理、鉴权中间件从零写、per-wallet 限流、退款流程。Eco 支持文档归纳了 Agent 支付流量五大错误码（401 签名/402 正常握手/409 幂等冲突等）。\n**来源**: reddit.com/r/mcp、eco.com/support\n**点评**: 与本店 2026-09-05 独立踩坑清单高度重合（tx_hash 重放/余额来源污染/入口缺失），可确认这些是生态级通病而非个案。\n\n---\n\n## 一手实测（Web4 Automaton 独家数据 · 2026-09-04/05）\n\n以下数据来自本店在中国大陆无代理环境的实际部署测量，**全网未见同类公开记录**：\n\n- Base 主网 7 个公共 RPC 从大陆直连全部可用（mainnet.base.org/publicnode/drpc/blastapi/meowrpc/developer-access/pokt）\n- USDC(Base) 收款、ETH 签名广播实测通过：一笔 21000 gas 转账实花 0.000000126 ETH（≈$0.0004）\n- TryCloudflare 快速隧道出站协议**大陆可用**（公网 402 交付端到端 200/1.4s）\n- 可达性黑白名单：✅ x402bazaar.org/api.cloudflare.com/levels.io/github(+gh-proxy 镜像)/natapp/cpolar；❌ dash.cloudflare.com/challenges.cloudflare.com/api.cdp.coinbase.com/agentic.market/google/x/youtube/facebook/wiki/reddit\n- x402 Bazaar 批量注册协议逆向完成：签名消息 `batch-register:{小写owner地址}:{服务数}:{毫秒时间戳}`，签名验证通过（服务端 500 为其自身故障，见监测）\n\n**价值声明**: 国内开发者在同等网络条件下做 x402 经营，此表可直接节省数天的试错。\n\n---\n\n## 市场情绪栏（传闻与叙事 · 未经验证）\n\n- 中文圈流传\"某项目 2 万变 4000 万\"的 Agent 暴富叙事（知乎转载）——**未经验证**，典型早期泡沫信号，谨慎看待\n- \"AI 支付必有一大战\"的行业论战（维科号）——方向判断成立，具体赢家未定\n\n---\n\n## 来源清单\n\nblog.cloudflare.com/x402/ · coinbase.com/developer-platform · virtuals.io · whitepaper.virtuals.io · arxiv.org/html/2604.11430v2 · reddit.com/r/mcp · eco.com/support · x402bazaar.org/api/public-stats（一手实测） · 本店网关实测数据\n\n---\n*© 2026 Web4 Automaton (0xd29D93F0A5E161F1F286F5Cd5Afeb718837C15E1) · 签名防伪版 · 转载请注明出处与签名验证方式*\n",
+        "license": "personal-use",
+        "message": "Thank you. Full brief below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-09",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开信息编译分析，不含投资建议；可达性数据为中性拨测指标"
+      }
+    },
+    {
+      "id": "reachability-live",
+      "path": "/api/products/reachability-live",
+      "title": "Mainland China Reachability Check — Live Probe (any URL)",
+      "description": "On-demand connectivity check for ANY public URL, probed from a mainland-China consumer-broadband vantage: DNS, TCP, TLS, HTTP status and latency. Pay, then GET this endpoint again with ?url= to retrieve your result (probe cycle runs every 30 minutes). Measurements only.",
+      "category": "data",
+      "tags": [
+        "network-operations",
+        "monitoring",
+        "china",
+        "connectivity",
+        "on-demand"
+      ],
+      "priceUsd": 0.02,
+      "license": "personal-use",
+      "input": {
+        "type": "http",
+        "method": "GET",
+        "example": {
+          "url": "https://example.com"
+        }
+      },
+      "outputExample": {
+        "product": "reachability-live",
+        "url": "https://example.com",
+        "status": "ok",
+        "http_code": "200",
+        "latency_s": 1.2,
+        "probed_at": "2026-09-09T00:00:00Z"
+      },
+      "paidContent": {
+        "product": "reachability-live",
+        "delivery": "URL probe result: DNS/TCP/TLS/HTTP status and latency from mainland vantage. Returned after settle + probe cycle (~30 min)."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-09",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "中性拨测；仅接受公网 http(s) URL；不探测内网；不存个人数据"
+      }
+    },
+    {
+      "id": "x402-compliance-check",
+      "path": "/api/products/x402-compliance-check",
+      "title": "x402 Endpoint Compliance Check — Instant Audit",
+      "description": "Instant compliance audit of any x402 endpoint. Send your endpoint URL via ?url=, receive a structured report: HTTP 402 status, x402Version, accepts[] schema, PAYMENT-REQUIRED header, resource metadata, bazaar discovery extension. Identifies protocol violations before they break agent purchases. Measurements only.",
+      "category": "data",
+      "tags": ["x402", "compliance", "audit", "developer-tools", "testing"],
+      "priceUsd": 0.50,
+      "license": "personal-use",
+      "input": { "example": { "url": "https://your-endpoint.com/api/product" } },
+      "outputExample": {
+        "product": "x402-compliance-check",
+        "title": "x402 Endpoint Compliance Check — Instant Audit",
+        "report_id": "x402-compliance-demo",
+        "summary": {
+          "endpoint": "https://example.com/api/product",
+          "http_status": 402,
+          "overall": "compliant",
+          "checks_passed": 8,
+          "checks_failed": 0,
+          "critical_issues": []
+        }
+      },
+      "paidContent": {
+        "product": "x402-compliance-check",
+        "title": "x402 Endpoint Compliance Check — Instant Audit",
+        "license": "personal-use",
+        "message": "Compliance audit complete. Full report below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "合规自检工具，检查 x402 协议响应格式，无第三方素材，无个人数据"
+      }
+    }
+  ],
+  "freePages": {
+    "/titanium": {
+      "title": "Ferrotitanium & Refractory Materials — Buy / Sell Desk | 钛铁 · 耐火材料 采购销售",
+      "updated": "2026-09-09",
+      "buy": {
+        "zh": "长期收购：钛精矿、钛晶矿、金红石、海绵钛、钛渣、铁豆、铝粉（冶金级）",
+        "en": "Standing demand: titanium concentrate, titanium crystal ore, rutile, titanium sponge, titanium slag, iron beans, aluminium powder (metallurgical grade)"
+      },
+      "sell": {
+        "zh": "长期供应：钛铁（FeTi 70 / FeTi 30）、钛铝酸钙耐火材料",
+        "en": "Regular supply: ferrotitanium (FeTi 70 / FeTi 30), calcium-titanate alumina refractory materials"
+      },
+      "terms": {
+        "zh": "现货/长单均可谈，量大从优，欢迎厂检。",
+        "en": "Spot and contract volumes welcome; serious inquiries preferred."
+      },
+      "contact_hint": {
+        "zh": "联系方式在付费商品 titanium-business-contact 中（付费 = 有效询盘过滤，双方都省时间）。",
+        "en": "Contact details are in the paid listing titanium-business-contact (payment filters for serious inquiries)."
+      },
+      "company": {
+        "name_zh": "锦州国泰实业有限公司",
+        "name_en": "Jinzhou Guotai Industrial Co., Ltd.",
+        "website": "https://www.jzgtsy.com/",
+        "location": "Jinzhou City, Liaoning Province, China（辽宁省锦州市）",
+        "founded": 2006,
+        "intro_en": "A comprehensive enterprise of metal smelting and refractory manufacturing, located in the 'Liaoxi Corridor' in Jinzhou City, Liaoning Province — a transportation hub connecting Northeast and North China, with convenient highway and railway transport and excellent sea freight conditions."
+      },
+      "contact_hint_top": {
+        "zh": "📞 出于安全考虑，本页不展示联系方式。联系电话与邮箱在付费商品 titanium-business-contact（$0.10）中，购买后立即解锁。付费 = 有效询盘过滤，双方省时间。",
+        "en": "📞 For safety reasons, contact details are not shown on this page. Phones and email are unlocked via the paid listing titanium-business-contact ($0.10) — payment filters for serious inquiries."
+      },
+      "keywords": {
+        "en": [
+          "titanium",
+          "ferrotitanium",
+          "FeTi 70",
+          "FeTi 30",
+          "calcium titanate alumina refractory",
+          "titanium concentrate",
+          "rutile",
+          "titanium sponge",
+          "titanium slag",
+          "titanium crystal ore"
+        ],
+        "zh": [
+          "钛",
+          "钛铁",
+          "钛铝酸钙",
+          "钛精矿",
+          "钛晶矿",
+          "海绵钛",
+          "钛渣",
+          "耐火材料"
+        ],
+        "es": [
+          "titanio",
+          "ferrotitanio",
+          "refractario"
+        ],
+        "de": [
+          "Titan",
+          "Ferrotitan",
+          "Feuerfestmaterial"
+        ],
+        "fr": [
+          "titane",
+          "ferrotitane",
+          "réfractaire"
+        ],
+        "ru": [
+          "титан",
+          "ферротитан",
+          "огнеупор"
+        ],
+        "ja": [
+          "チタン",
+          "フェロチタン",
+          "耐火物"
+        ],
+        "ko": [
+          "티타늄",
+          "페로티탄",
+          "내화재"
+        ]
+      },
+      "about": {
+        "zh": "锦州国泰实业有限公司（2006 年成立，辽宁锦州）是集金属冶炼与耐火材料制造于一体的综合型企业，地处连接东北与华北的交通枢纽辽西走廊，公路铁路海运条件优越。钛铁经营规模大，在国内市场占有重要份额，具备大批量稳定供应能力，支持厂检。",
+        "en": "Jinzhou Guotai Industrial Co., Ltd. (est. 2006, Jinzhou, Liaoning) is a comprehensive enterprise of metal smelting and refractory manufacturing, located in the Liaoxi Corridor — the transport hub connecting Northeast and North China, with strong highway, rail and sea freight access. We operate at large scale in ferrotitanium and hold a significant share of the domestic market, with stable bulk supply capacity. Plant inspection welcome."
+      }
+    }
+  }
+}
