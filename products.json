@@ -2,7 +2,7 @@
   "_meta": {
     "FILE-OWNER": "DSH",
     "FILE-PURPOSE": "x402 商品目录（单一事实源）",
-    "LAST-MODIFIED-BY": "Claude @ 2026-09-11 (+bulletin-post $0.01 experimental)",
+    "LAST-MODIFIED-BY": "Claude @ 2026-09-11 (+x402-wrap-generator $2.00 元编程旗舰)",
     "DO-NOT-MODIFY-WITHOUT": "DSH 确认",
     "CHANGELOG": [
       "2026-09-10 Claude: +domain-health $0.02 (DNS/HTTP/SSL/RDAP 四项，全球 dev 工具需求，与 DSH CN 家族零重叠)"
@@ -2721,6 +2721,113 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "纯计算不存储密码；零数据留存"
+      }
+    },
+    {
+      "id": "developer-toolkit",
+      "path": "/api/products/developer-toolkit",
+      "title": "Developer Toolkit Bundle — Redirect Tracer + Content Type + JWT + Cron + Password",
+      "description": "5-in-1 developer utility bundle: full redirect chain tracer + content type detector (MIME/encoding/hint) + JWT decoder (header/payload/expiry) + cron expression parser (validate + next 5 runs) + password strength analyzer (entropy + crack time). Everything a developer needs for debugging and validation in one call.",
+      "category": "tools",
+      "tags": [
+        "developer",
+        "bundle",
+        "redirect",
+        "jwt",
+        "cron",
+        "password",
+        "content-type"
+      ],
+      "priceUsd": 0.15,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "developer-toolkit",
+        "bundle_of": [
+          "redirect-tracer",
+          "content-type-detector",
+          "jwt-decode",
+          "cron-parser",
+          "password-strength"
+        ],
+        "fields": [
+          "redirect_chain",
+          "content_type",
+          "jwt_decoded",
+          "cron_parsed",
+          "password_analyzed"
+        ]
+      },
+      "paidContent": {
+        "product": "developer-toolkit",
+        "title": "Developer Toolkit Bundle",
+        "message": "5-in-1 developer utility results."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$5-15",
+        "timeMinutes": 60,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "HTTP redirects, MIME types, JWT format, cron syntax, Shannon entropy",
+        "buyVsBuild": "Buy $0.15 vs self-dev $5-15 + 60 min + 5 skill sets. Buy saves 97%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "开发者工具整合；无敏感操作"
+      }
+    },
+    {
+      "id": "x402-wrap-generator",
+      "path": "/api/products/x402-wrap-generator",
+      "title": "x402 Wrap Generator — turn YOUR plain API into a sellable x402 endpoint (custom code package)",
+      "description": "The meta-product: submit any plain API URL (?api_url=, optional ?name= &price=), receive a complete generated launch package — a custom x402-wrapping worker (all 10 protocol pitfalls pre-fixed), your products.json entry, a probe-based pitfall checklist customized to YOUR API (auth detected? slow? non-JSON?), and a step-by-step deployment runbook. You get code written by a system that has launched and settled real x402 services. DIY comparison: wrapping + pitfall-proofing yourself ≈ 4-10 hrs + protocol churn tracking — this package: $2.00, instant.",
+      "category": "tools",
+      "tags": [
+        "x402",
+        "codegen",
+        "developer-tools",
+        "launch",
+        "meta"
+      ],
+      "priceUsd": 2.0,
+      "license": "personal-use",
+      "input": {
+        "type": "http",
+        "method": "GET",
+        "example": {
+          "api_url": "https://your-api.com/endpoint",
+          "name": "My API",
+          "price": "0.05"
+        }
+      },
+      "outputExample": {
+        "product": "x402-wrap-generator",
+        "kit": {
+          "probe": {},
+          "generated": {
+            "worker_js": "...",
+            "products_entry": {},
+            "runbook": []
+          }
+        }
+      },
+      "paidContent": {
+        "product": "x402-wrap-generator",
+        "license": "personal-use",
+        "message": "Wrap kit generated. Code bundle below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "生成代码模板（公开协议知识），探测仅读公开响应头/形状"
       }
     }
   ],
