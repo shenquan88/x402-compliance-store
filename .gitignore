@@ -1,0 +1,8 @@
+node_modules/
+wrangler.toml
+.wrangler/
+dist/
+.env
+*.log
+sentinel_state.json
+test/secrets/
