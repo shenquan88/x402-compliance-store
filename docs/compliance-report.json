@@ -1,0 +1,448 @@
+{
+  "title": "x402 Compliance Comparison Report",
+  "generated_at": "2026-09-10T12:04:03Z",
+  "services_checked": 8,
+  "results": [
+    {
+      "service": "fetchx402 (竞品)",
+      "endpoint": "https://api.fetchx402.com/v1/tools/dns?domain=example.com&type=A",
+      "http_status": 402,
+      "overall": "non-compliant (6 issues)",
+      "checks_passed": 2,
+      "checks_total": 8,
+      "checks_failed": 6,
+      "critical_issues": [
+        "x402_version",
+        "accepts_array",
+        "accept_schema",
+        "resource_metadata",
+        "bazaar_extension",
+        "bazaar_info"
+      ],
+      "checks": [
+        {
+          "name": "http_status_402",
+          "passed": true,
+          "detail": "got HTTP 402"
+        },
+        {
+          "name": "x402_version",
+          "passed": false,
+          "detail": "version missing"
+        },
+        {
+          "name": "accepts_array",
+          "passed": false,
+          "detail": "0 scheme(s)"
+        },
+        {
+          "name": "accept_schema",
+          "passed": false,
+          "detail": "no accepts"
+        },
+        {
+          "name": "payment_required_header",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "resource_metadata",
+          "passed": false,
+          "detail": "missing"
+        },
+        {
+          "name": "bazaar_extension",
+          "passed": false,
+          "detail": "absent"
+        },
+        {
+          "name": "bazaar_info",
+          "passed": false,
+          "detail": "no bazaar"
+        }
+      ]
+    },
+    {
+      "service": "我们: x402-compliance-check",
+      "endpoint": "https://web4shop-x402.web4shop-7023.workers.dev/api/products/x402-compliance-check",
+      "http_status": 402,
+      "overall": "compliant",
+      "checks_passed": 8,
+      "checks_total": 8,
+      "checks_failed": 0,
+      "critical_issues": [],
+      "checks": [
+        {
+          "name": "http_status_402",
+          "passed": true,
+          "detail": "got HTTP 402"
+        },
+        {
+          "name": "x402_version",
+          "passed": true,
+          "detail": "version 2"
+        },
+        {
+          "name": "accepts_array",
+          "passed": true,
+          "detail": "1 scheme(s)"
+        },
+        {
+          "name": "accept_schema",
+          "passed": true,
+          "detail": "all fields present"
+        },
+        {
+          "name": "payment_required_header",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "resource_metadata",
+          "passed": true,
+          "detail": "url+description present"
+        },
+        {
+          "name": "bazaar_extension",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "bazaar_info",
+          "passed": true,
+          "detail": "title+description present"
+        }
+      ]
+    },
+    {
+      "service": "我们: cn-reachability-digest",
+      "endpoint": "https://web4shop-x402.web4shop-7023.workers.dev/api/products/cn-reachability-digest",
+      "http_status": 402,
+      "overall": "compliant",
+      "checks_passed": 8,
+      "checks_total": 8,
+      "checks_failed": 0,
+      "critical_issues": [],
+      "checks": [
+        {
+          "name": "http_status_402",
+          "passed": true,
+          "detail": "got HTTP 402"
+        },
+        {
+          "name": "x402_version",
+          "passed": true,
+          "detail": "version 2"
+        },
+        {
+          "name": "accepts_array",
+          "passed": true,
+          "detail": "1 scheme(s)"
+        },
+        {
+          "name": "accept_schema",
+          "passed": true,
+          "detail": "all fields present"
+        },
+        {
+          "name": "payment_required_header",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "resource_metadata",
+          "passed": true,
+          "detail": "url+description present"
+        },
+        {
+          "name": "bazaar_extension",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "bazaar_info",
+          "passed": true,
+          "detail": "title+description present"
+        }
+      ]
+    },
+    {
+      "service": "我们: cn-us-reachability-snapshot",
+      "endpoint": "https://web4shop-x402.web4shop-7023.workers.dev/api/products/cn-us-reachability-snapshot",
+      "http_status": 402,
+      "overall": "compliant",
+      "checks_passed": 8,
+      "checks_total": 8,
+      "checks_failed": 0,
+      "critical_issues": [],
+      "checks": [
+        {
+          "name": "http_status_402",
+          "passed": true,
+          "detail": "got HTTP 402"
+        },
+        {
+          "name": "x402_version",
+          "passed": true,
+          "detail": "version 2"
+        },
+        {
+          "name": "accepts_array",
+          "passed": true,
+          "detail": "1 scheme(s)"
+        },
+        {
+          "name": "accept_schema",
+          "passed": true,
+          "detail": "all fields present"
+        },
+        {
+          "name": "payment_required_header",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "resource_metadata",
+          "passed": true,
+          "detail": "url+description present"
+        },
+        {
+          "name": "bazaar_extension",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "bazaar_info",
+          "passed": true,
+          "detail": "title+description present"
+        }
+      ]
+    },
+    {
+      "service": "我们: umbrella",
+      "endpoint": "https://web4shop-x402.web4shop-7023.workers.dev/api/products/umbrella",
+      "http_status": 402,
+      "overall": "compliant",
+      "checks_passed": 8,
+      "checks_total": 8,
+      "checks_failed": 0,
+      "critical_issues": [],
+      "checks": [
+        {
+          "name": "http_status_402",
+          "passed": true,
+          "detail": "got HTTP 402"
+        },
+        {
+          "name": "x402_version",
+          "passed": true,
+          "detail": "version 2"
+        },
+        {
+          "name": "accepts_array",
+          "passed": true,
+          "detail": "1 scheme(s)"
+        },
+        {
+          "name": "accept_schema",
+          "passed": true,
+          "detail": "all fields present"
+        },
+        {
+          "name": "payment_required_header",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "resource_metadata",
+          "passed": true,
+          "detail": "url+description present"
+        },
+        {
+          "name": "bazaar_extension",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "bazaar_info",
+          "passed": true,
+          "detail": "title+description present"
+        }
+      ]
+    },
+    {
+      "service": "api.fetchx402.com",
+      "endpoint": "https://api.fetchx402.com/v1/bundles/uptime-check",
+      "http_status": 402,
+      "overall": "non-compliant (6 issues)",
+      "checks_passed": 2,
+      "checks_total": 8,
+      "checks_failed": 6,
+      "critical_issues": [
+        "x402_version",
+        "accepts_array",
+        "accept_schema",
+        "resource_metadata",
+        "bazaar_extension",
+        "bazaar_info"
+      ],
+      "checks": [
+        {
+          "name": "http_status_402",
+          "passed": true,
+          "detail": "got HTTP 402"
+        },
+        {
+          "name": "x402_version",
+          "passed": false,
+          "detail": "version missing"
+        },
+        {
+          "name": "accepts_array",
+          "passed": false,
+          "detail": "0 scheme(s)"
+        },
+        {
+          "name": "accept_schema",
+          "passed": false,
+          "detail": "no accepts"
+        },
+        {
+          "name": "payment_required_header",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "resource_metadata",
+          "passed": false,
+          "detail": "missing"
+        },
+        {
+          "name": "bazaar_extension",
+          "passed": false,
+          "detail": "absent"
+        },
+        {
+          "name": "bazaar_info",
+          "passed": false,
+          "detail": "no bazaar"
+        }
+      ]
+    },
+    {
+      "service": "orcpin.dev",
+      "endpoint": "https://orcpin.dev/v1/endpoint-reliability",
+      "http_status": 402,
+      "overall": "non-compliant (1 issues)",
+      "checks_passed": 7,
+      "checks_total": 8,
+      "checks_failed": 1,
+      "critical_issues": [
+        "bazaar_info"
+      ],
+      "checks": [
+        {
+          "name": "http_status_402",
+          "passed": true,
+          "detail": "got HTTP 402"
+        },
+        {
+          "name": "x402_version",
+          "passed": true,
+          "detail": "version 2"
+        },
+        {
+          "name": "accepts_array",
+          "passed": true,
+          "detail": "1 scheme(s)"
+        },
+        {
+          "name": "accept_schema",
+          "passed": true,
+          "detail": "all fields present"
+        },
+        {
+          "name": "payment_required_header",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "resource_metadata",
+          "passed": true,
+          "detail": "url+description present"
+        },
+        {
+          "name": "bazaar_extension",
+          "passed": true,
+          "detail": "present"
+        },
+        {
+          "name": "bazaar_info",
+          "passed": false,
+          "detail": "missing"
+        }
+      ]
+    },
+    {
+      "service": "x402.agentutility.ai",
+      "endpoint": "https://x402.agentutility.ai/email-deliverability",
+      "http_status": 200,
+      "overall": "non-compliant (8 issues)",
+      "checks_passed": 0,
+      "checks_total": 8,
+      "checks_failed": 8,
+      "critical_issues": [
+        "http_status_402",
+        "x402_version",
+        "accepts_array",
+        "accept_schema",
+        "payment_required_header",
+        "resource_metadata",
+        "bazaar_extension",
+        "bazaar_info"
+      ],
+      "checks": [
+        {
+          "name": "http_status_402",
+          "passed": false,
+          "detail": "got HTTP 200"
+        },
+        {
+          "name": "x402_version",
+          "passed": false,
+          "detail": "version missing"
+        },
+        {
+          "name": "accepts_array",
+          "passed": false,
+          "detail": "0 scheme(s)"
+        },
+        {
+          "name": "accept_schema",
+          "passed": false,
+          "detail": "no accepts"
+        },
+        {
+          "name": "payment_required_header",
+          "passed": false,
+          "detail": "absent"
+        },
+        {
+          "name": "resource_metadata",
+          "passed": false,
+          "detail": "missing"
+        },
+        {
+          "name": "bazaar_extension",
+          "passed": false,
+          "detail": "absent"
+        },
+        {
+          "name": "bazaar_info",
+          "passed": false,
+          "detail": "no bazaar"
+        }
+      ]
+    }
+  ]
+}
