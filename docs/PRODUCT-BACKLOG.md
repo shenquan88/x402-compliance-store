@@ -5,6 +5,43 @@
 > 基于 GitHub Issues 搜索（2026-09-10）整理的真实需求。
 > 我们现在没有这些商品，但能开发。空闲或做周边产品时顺道开发。
 
+## 优先级 P0 — 逆向搜索发现的高频 AI 需求（竞品验证）
+
+### 0a. url-to-markdown — 网页转 Markdown $0.01
+- **需求来源**: awesome-x402 中 4+ 竞品（AnyBrowse $0.01, J-sey $0.002, AgentPay $0.005）
+- **功能**: 输入 URL → fetch HTML → 剥离标签 → 返回干净 Markdown 文本
+- **自开发成本**: $0.50-2 token + 10 min + HTML 解析
+- **Workers 可行性**: ✅ fetch + 正则 strip tags
+- **竞品价格**: $0.002-$0.01 → 我们定价 $0.01
+
+### 0b. dns-lookup — DNS 记录查询 $0.001
+- **需求来源**: awesome-x402 中 2+ 竞品（Crysha $0.001, AgentPay $0.001）
+- **功能**: 输入域名 → DoH 查询 A/AAAA/MX/TXT/NS 记录 → 返回结构化 JSON
+- **自开发成本**: $0.50 token + 5 min + DoH 协议
+- **Workers 可行性**: ✅ 已有 dohQuery() 函数
+- **竞品价格**: $0.001 → 我们定价 $0.001（最低价引流）
+
+### 0c. health-check — HTTP 健康检查 $0.001
+- **需求来源**: awesome-x402 中竞品 AgentPay $0.001
+- **功能**: 输入 URL → 返回状态码 + 响应时间 + SSL + 重定向链
+- **自开发成本**: $0.50 token + 5 min
+- **Workers 可行性**: ✅ fetch + 计时
+- **竞品价格**: $0.001 → 我们定价 $0.001（最低价引流）
+
+### 0d. summarize-api — 网页摘要 $0.05
+- **需求来源**: awesome-x402 中 3+ 竞品（OpSpawn Bazaar, APIbase.pro）
+- **功能**: 输入 URL → 抓取内容 → 提取标题+描述+关键词+正文前 500 字
+- **自开发成本**: $1-3 token + 15 min + 文本提取
+- **Workers 可行性**: ✅ fetch + 正则提取（非 AI 摘要，是结构化提取）
+- **竞品价格**: $0.01-$0.05 → 我们定价 $0.05（含结构化提取）
+
+### 0e. agent-registry — AI Agent 注册/发现 $0.05
+- **需求来源**: awesome-x402 中 4+ 竞品（Agent Arena, AgentLux, AgentStore, BlockRun）
+- **功能**: AI agent 注册自己的信息 → 可被其他 agent 搜索发现
+- **自开发成本**: $2-5 token + 30 min + KV 存储
+- **Workers 可行性**: ✅ KV 存储注册信息
+- **竞品价格**: $0.001搜索/$0.05注册 → 我们定价 $0.05 注册
+
 ## 优先级 P1 — 需求量大 + Workers 可实现
 
 ### 1. ssl-cert-check — SSL 证书到期检查 $0.15
