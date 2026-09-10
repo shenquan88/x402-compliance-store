@@ -13,7 +13,8 @@
  *
  * CHANGELOG:
  *   2026-09-10 DSH     audit-pro/cross-border/cn-dns-leak/firewall-status/infra-daily + CN_VPS_API
- *   2026-09-10 Claude  发现协议三件套(.well-known/openapi/indexnow-key) + 免费层(us-probe/x402-audit) + domain-health 商品
+ *   2026-09-11 Claude  x402-wrap-generator 元编程旗舰（$2.00，生成买家定制包装代码包）
+*   2026-09-10 Claude  发现协议三件套(.well-known/openapi/indexnow-key) + 免费层(us-probe/x402-audit) + domain-health 商品
  *
  * Flow:
  *   1. GET 无付款头  -> 402 + PAYMENT-REQUIRED（标准 base64）+ bazaar 扩展
@@ -27,6 +28,7 @@
  */
 
 import catalog from "../products.json";
+import { generateWrapKit } from "./wrap_generator.js";
 
 const { store, products, freePages = {} } = catalog;
 const X402_VERSION = 2;
@@ -982,6 +984,22 @@ async function handlePaid(request, path, product, env, ctx) {
         );
       }
 
+      // x402-wrap-generator: 给普通 API 生成完整 x402 包装代码包（元编程旗舰）
+      // OWNER: Claude  CHANGELOG: 2026-09-11 Claude 新增
+      if (product.id === "x402-wrap-generator") {
+        const apiUrl = (url.searchParams.get("api_url") || "").trim();
+        const svcName = ((url.searchParams.get("name") || "My x402 Service").trim().replace(/["\`${}]/g, "")).slice(0, 60);
+        const price = parseFloat(url.searchParams.get("price") || "0.01");
+        if (!apiUrl.startsWith("http")) {
+          return new Response(JSON.stringify({ error: "Missing ?api_url= (your plain API endpoint). Optional: ?name=&price=" }), { status: 400, headers: jsonHeaders() });
+        }
+        const kit = await generateWrapKit(apiUrl, svcName, isFinite(price) && price > 0 ? price : 0.01);
+        return new Response(
+          JSON.stringify({ ...product.paidContent, kit, receipt }, null, 2),
+          { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
+        );
+      }
+
       // bulletin-post: 付费公告板（公开 feed + IndexNow 联动）
       // OWNER: Claude  CHANGELOG: 2026-09-11 Claude 新增（实验品）
       if (product.id === "bulletin-post") {
@@ -1920,6 +1938,22 @@ async function handlePaid(request, path, product, env, ctx) {
         }
       }
 
+      // developer-toolkit: bundle — redirect + content-type + jwt + cron + password
+      if (product.id === "developer-toolkit") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        const jwtToken = (new URL(request.url).searchParams.get("jwt") || "").trim();
+        const cronExpr = (new URL(request.url).searchParams.get("cron") || "").trim();
+        const pwd = (new URL(request.url).searchParams.get("pwd") || "").trim();
+        const result = {};
+        if (targetUrl) { try { const chain = []; let cur = targetUrl; const visited = new Set(); for (let i = 0; i < 10; i++) { if (visited.has(cur)) break; visited.add(cur); const r = await fetch(cur, { method: "GET", signal: AbortSignal.timeout(5000), redirect: "manual" }); chain.push({ url: cur, status: r.status, location: r.headers.get("location") }); if (r.status >= 300 && r.status < 400 && r.headers.get("location")) { cur = new URL(r.headers.get("location"), cur).href; } else break; } result.redirect_chain = { original: targetUrl, final: cur, hops: chain.length, chain }; } catch (e) { result.redirect_chain = { error: String(e).substring(0, 80) }; } }
+        if (targetUrl) { try { const r = await fetch(targetUrl, { method: "HEAD", signal: AbortSignal.timeout(5000) }); result.content_type = { mime: (r.headers.get("content-type") || "").split(";")[0], encoding: r.headers.get("content-encoding") || "none", length: r.headers.get("content-length") || "0" }; } catch (e) { result.content_type = { error: String(e).substring(0, 80) }; } }
+        if (jwtToken) { try { const parts = jwtToken.split("."); if (parts.length >= 2) { const d = (s) => { s = s.replace(/-/g,"+").replace(/_/g,"/"); while (s.length % 4) s += "="; return atob(s); }; const hdr = JSON.parse(d(parts[0])); const pld = JSON.parse(d(parts[1])); result.jwt = { header: hdr, payload: pld, algorithm: hdr.alg || "unknown", expired: pld.exp ? Date.now() > pld.exp * 1000 : null }; } } catch (e) { result.jwt = { error: "decode failed" }; } }
+        if (cronExpr) { try { const p2 = cronExpr.trim().split(/\s+/); result.cron = { valid: p2.length === 5 || p2.length === 6, fields: p2.length, expression: cronExpr }; } catch (e) { result.cron = { error: String(e).substring(0, 80) }; } }
+        if (pwd) { try { let cs = 0; if (/[a-z]/.test(pwd)) cs += 26; if (/[A-Z]/.test(pwd)) cs += 26; if (/[0-9]/.test(pwd)) cs += 10; if (/[^a-zA-Z0-9]/.test(pwd)) cs += 32; const ent = pwd.length * Math.log2(Math.max(cs, 1)); result.password = { length: pwd.length, entropy_bits: Math.round(ent * 10) / 10, strength: ent >= 80 ? "strong" : ent >= 60 ? "moderate" : ent >= 36 ? "weak" : "very weak", note: "not stored" }; } catch (e) { result.password = { error: String(e).substring(0, 80) }; } }
+        const meta = buildMeta(path, requestStartedAt);
+        return new Response(JSON.stringify({ ...product.paidContent, ...result, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+      }
+
       return new Response(
         JSON.stringify({ ...product.paidContent, receipt }, null, 2),
         { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
@@ -2061,7 +2095,7 @@ ${urls.map((u) => `  <url><loc>${origin}${u}</loc></url>`).join("\n")}
         name_for_human: "web4shop — x402 Paid API Services",
         name_for_model: "web4shop_x402_services",
         description_for_human: "Pay-per-call API services: mainland-China vantage connectivity checks, CN/US infrastructure snapshots, x402 endpoint compliance audits (8-point basic + 14-point pro), cross-border API probing, DNS resolution divergence checks, cloud infrastructure reachability daily. Settled in USDC on Base via x402.",
-        description_for_model: "x402 protocol paid API catalog. 43 products (36 single + 7 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01, redirect-tracer $0.05. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, password-strength $0.02, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, content-type-detector $0.02, openapi-validate $0.30. Auth: jwt-decode $0.02. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05, ip-info $0.05, cron-parser $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
+        description_for_model: "x402 protocol paid API catalog. 44 products (36 single + 8 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01, redirect-tracer $0.05. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, password-strength $0.02, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, content-type-detector $0.02, openapi-validate $0.30. Auth: jwt-decode $0.02. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05, ip-info $0.05, cron-parser $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
         api: { type: "openapi", url: `${origin}/openapi.json`, is_user_authenticated: false },
         auth: { type: "x402", protocol: "x402/v2", network: "base", asset: "USDC" },
         contact_email: "use on-chain memo via /support",
