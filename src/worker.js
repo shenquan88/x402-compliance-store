@@ -1622,6 +1622,111 @@ async function handlePaid(request, path, product, env, ctx) {
         }
       }
 
+      // site-security-audit: bundle — SSL + security headers + broken links
+      if (product.id === "site-security-audit") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(10000), redirect: "follow" });
+          // Security headers
+          const checks = [
+            { name: "content_security_policy", header: "content-security-policy", passed: resp.headers.has("content-security-policy") },
+            { name: "strict_transport_security", header: "strict-transport-security", passed: resp.headers.has("strict-transport-security") },
+            { name: "x_frame_options", header: "x-frame-options", passed: resp.headers.has("x-frame-options") },
+            { name: "x_content_type_options", header: "x-content-type-options", passed: resp.headers.has("x-content-type-options") },
+            { name: "referrer_policy", header: "referrer-policy", passed: resp.headers.has("referrer-policy") },
+            { name: "permissions_policy", header: "permissions-policy", passed: resp.headers.has("permissions-policy") },
+          ];
+          const headersPassed = checks.filter(c => c.passed).length;
+          const headersScore = Math.round((headersPassed / checks.length) * 100);
+          const headersGrade = headersScore >= 80 ? "A" : headersScore >= 60 ? "B" : headersScore >= 40 ? "C" : "D";
+          // SSL info
+          const isHttps = targetUrl.startsWith("https://");
+          // Broken links
+          const html = await resp.text();
+          const linkRegex = /href=["']([^"']+)["']/gi;
+          const links = [...new Set([...html.matchAll(linkRegex)].map(m => m[1]).filter(l => l.startsWith("http")))].slice(0, 20);
+          const broken = [];
+          for (const link of links.slice(0, 15)) {
+            try { const r = await fetch(link, { method: "HEAD", signal: AbortSignal.timeout(5000), redirect: "follow" }); if (r.status >= 400) broken.push({ url: link, status: r.status }); }
+            catch (e) { broken.push({ url: link, status: 0, error: String(e).substring(0, 60) }); }
+          }
+          const overall = Math.round((headersScore + (isHttps ? 100 : 0) + (broken.length === 0 ? 100 : Math.max(0, 100 - broken.length * 20))) / 3);
+          const recs = [];
+          if (!isHttps) recs.push("Switch to HTTPS");
+          checks.filter(c => !c.passed).forEach(c => recs.push(`Add ${c.header} header`));
+          if (broken.length > 0) recs.push(`Fix ${broken.length} broken links`);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, ssl_check: { https: isHttps, status: resp.status }, headers_audit: { score: headersScore, grade: headersGrade, passed: headersPassed, total: checks.length, checks }, broken_links: { total: links.length, broken_count: broken.length, broken }, overall_score: overall, recommendations: recs, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // content-analysis: bundle — markdown + metadata + broken links
+      if (product.id === "content-analysis") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(10000), redirect: "follow", headers: { "User-Agent": "web4shop-content/1.0" } });
+          const html = await resp.text();
+          // Markdown
+          const titleM = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+          let clean = html.replace(/<(script|style|nav|footer|header|aside|noscript)[^>]*>[\s\S]*?<\/\1>/gi, "");
+          clean = clean.replace(/<!--[\s\S]*?-->/g, "").replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi, '[$2]($1)');
+          clean = clean.replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi, (_, lvl, txt) => '\n' + '#'.repeat(parseInt(lvl)) + ' ' + txt.replace(/<[^>]+>/g, '').trim() + '\n');
+          clean = clean.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n').replace(/<\/?(p|br|div|section|article|main)[^>]*>/gi, '\n').replace(/<[^>]+>/g, '');
+          clean = clean.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').replace(/^\s+/gm, '').trim();
+          if (clean.length > 30000) clean = clean.substring(0, 30000) + '\n\n[...truncated...]';
+          // Metadata
+          const descM = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i);
+          const kwM = html.match(/<meta\s+name=["']keywords["']\s+content=["']([^"']*)["']/i);
+          // Broken links
+          const links = [...new Set([...html.matchAll(/href=["']([^"']+)["']/gi)].map(m => m[1]).filter(l => l.startsWith("http")))].slice(0, 15);
+          const broken = [];
+          for (const link of links.slice(0, 10)) {
+            try { const r = await fetch(link, { method: "HEAD", signal: AbortSignal.timeout(5000) }); if (r.status >= 400) broken.push({ url: link, status: r.status }); }
+            catch (e) { broken.push({ url: link, status: 0 }); }
+          }
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, markdown: clean, word_count: clean.split(/\s+/).filter(Boolean).length, metadata: { title: titleM ? titleM[1].trim() : "", description: descM ? descM[1].trim() : "", keywords: kwM ? kwM[1].trim() : "" }, broken_links: { total: links.length, broken_count: broken.length, broken }, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // domain-intel-full: bundle — WHOIS + DNSSEC + DNS + SSL
+      if (product.id === "domain-intel-full") {
+        const domain = (new URL(request.url).searchParams.get("domain") || "").trim();
+        if (!domain) { return new Response(JSON.stringify({ error: "Missing ?domain= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          // WHOIS via RDAP
+          let whois = {};
+          try { const rdapResp = await fetch(`https://rdap.org/domain/${domain}`, { signal: AbortSignal.timeout(10000), headers: { "Accept": "application/rdap+json" } }); if (rdapResp.ok) { const rdap = await rdapResp.json(); const events = rdap.events || []; whois = { registrar: rdap.entities?.find(e => e.roles?.includes("registrar"))?.vcardArray?.[1]?.find(v => v[0] === "fn")?.[3] || "unknown", created: events.find(e => e.eventAction === "registration")?.eventDate, expiry: events.find(e => e.eventAction === "expiration")?.eventDate, status: rdap.status || [] }; } }
+          catch { whois = { error: "RDAP query failed" }; }
+          // DNSSEC
+          let dnssec = {};
+          try { const dohResp = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A&do=1&cd=0`, { signal: AbortSignal.timeout(10000), headers: { "Accept": "application/dns-json" } }); const dns = await dohResp.json(); dnssec = { enabled: dns.AD === true || (dns.Answer && dns.Answer.some(a => a.type === 46)), ad_flag: dns.AD === true }; }
+          catch { dnssec = { error: "DNSSEC query failed" }; }
+          // DNS records
+          const recordTypes = ["A", "AAAA", "MX", "TXT", "NS", "CNAME"];
+          const dnsRecords = {};
+          for (const rt of recordTypes) { try { dnsRecords[rt] = await dohQuery(domain, rt); } catch { dnsRecords[rt] = { error: "failed" }; } }
+          // SSL
+          let ssl = {};
+          try { const sslResp = await fetch(`https://${domain}/`, { method: "HEAD", signal: AbortSignal.timeout(10000) }); ssl = { https: true, status: sslResp.status, headers: Object.fromEntries(sslResp.headers.entries()) }; }
+          catch { ssl = { https: false, error: "SSL/TLS connection failed" }; }
+          const summary = { domain, whois_available: !whois.error, dnssec_enabled: dnssec.enabled || false, dns_records_found: Object.keys(dnsRecords).length, ssl_valid: ssl.https };
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, whois, dnssec, dns_records: dnsRecords, ssl, summary, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
       return new Response(
         JSON.stringify({ ...product.paidContent, receipt }, null, 2),
         { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
@@ -1763,7 +1868,7 @@ ${urls.map((u) => `  <url><loc>${origin}${u}</loc></url>`).join("\n")}
         name_for_human: "web4shop — x402 Paid API Services",
         name_for_model: "web4shop_x402_services",
         description_for_human: "Pay-per-call API services: mainland-China vantage connectivity checks, CN/US infrastructure snapshots, x402 endpoint compliance audits (8-point basic + 14-point pro), cross-border API probing, DNS resolution divergence checks, cloud infrastructure reachability daily. Settled in USDC on Base via x402.",
-        description_for_model: "x402 protocol paid API catalog. 34 products (30 single + 4 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, domain-health $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, openapi-validate $0.30. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
+        description_for_model: "x402 protocol paid API catalog. 37 products (30 single + 7 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, domain-health $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, openapi-validate $0.30. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
         api: { type: "openapi", url: `${origin}/openapi.json`, is_user_authenticated: false },
         auth: { type: "x402", protocol: "x402/v2", network: "base", asset: "USDC" },
         contact_email: "use on-chain memo via /support",
