@@ -2271,6 +2271,166 @@
         "noPersonalData": true,
         "note": "OpenAPI 规范验证；无敏感操作"
       }
+    },
+    {
+      "id": "site-security-audit",
+      "path": "/api/products/site-security-audit",
+      "title": "Site Security Audit Bundle — SSL + Headers + Broken Links",
+      "description": "Complete website security audit in one call: SSL certificate check + 10-point security headers audit (CSP, HSTS, CORS, X-Frame-Options) + broken links scanner. Three tools unified into one report with score, grade, and recommendations.",
+      "category": "tools",
+      "tags": [
+        "security",
+        "ssl",
+        "headers",
+        "broken-links",
+        "audit",
+        "bundle"
+      ],
+      "priceUsd": 0.4,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "site-security-audit",
+        "bundle_of": [
+          "ssl-cert-check",
+          "security-headers-check",
+          "broken-links-check"
+        ],
+        "fields": [
+          "ssl_check",
+          "headers_audit",
+          "broken_links",
+          "overall_score",
+          "recommendations"
+        ]
+      },
+      "paidContent": {
+        "product": "site-security-audit",
+        "title": "Site Security Audit Bundle",
+        "message": "Complete security audit: SSL + headers + broken links."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$3-8",
+        "timeMinutes": 40,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "X.509 certificates, OWASP security headers, HTML parsing, HTTP status codes",
+        "buyVsBuild": "Buy $0.40 vs self-dev $3-8 + 40 min + 3 skill sets. Buy saves 87%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "整合三个安全检查工具；无敏感操作"
+      }
+    },
+    {
+      "id": "content-analysis",
+      "path": "/api/products/content-analysis",
+      "title": "Content Analysis Bundle — Markdown + Summary + Broken Links",
+      "description": "Analyze any webpage in one call: convert HTML to clean Markdown + extract structured metadata (title, description, keywords, OG tags) + scan for broken links. Three content tools unified. Perfect for AI agents processing web content.",
+      "category": "tools",
+      "tags": [
+        "content",
+        "markdown",
+        "summary",
+        "broken-links",
+        "analysis",
+        "bundle"
+      ],
+      "priceUsd": 0.2,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "content-analysis",
+        "bundle_of": [
+          "url-to-markdown",
+          "summarize-api",
+          "broken-links-check"
+        ],
+        "fields": [
+          "markdown",
+          "metadata",
+          "broken_links",
+          "word_count"
+        ]
+      },
+      "paidContent": {
+        "product": "content-analysis",
+        "title": "Content Analysis Bundle",
+        "message": "Content analysis: markdown + metadata + broken links."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$2-5",
+        "timeMinutes": 30,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "HTML parsing, meta tag extraction, link checking, content cleaning",
+        "buyVsBuild": "Buy $0.20 vs self-dev $2-5 + 30 min + 3 skill sets. Buy saves 90%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页内容分析；无敏感操作"
+      }
+    },
+    {
+      "id": "domain-intel-full",
+      "path": "/api/products/domain-intel-full",
+      "title": "Domain Intelligence Bundle — WHOIS + DNSSEC + DNS + SSL",
+      "description": "Complete domain intelligence in one call: WHOIS registration data (registrar, dates, status) via RDAP + DNSSEC validation + full DNS records (A/AAAA/MX/TXT/NS) + SSL certificate check. Four tools for comprehensive domain profiling.",
+      "category": "tools",
+      "tags": [
+        "domain",
+        "whois",
+        "dnssec",
+        "dns",
+        "ssl",
+        "intelligence",
+        "bundle"
+      ],
+      "priceUsd": 0.3,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "domain-intel-full",
+        "bundle_of": [
+          "whois-lookup",
+          "dnssec-check",
+          "dns-lookup",
+          "ssl-cert-check"
+        ],
+        "fields": [
+          "whois",
+          "dnssec",
+          "dns_records",
+          "ssl",
+          "summary"
+        ]
+      },
+      "paidContent": {
+        "product": "domain-intel-full",
+        "title": "Domain Intelligence Bundle",
+        "message": "Domain intelligence: WHOIS + DNSSEC + DNS + SSL."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$3-8",
+        "timeMinutes": 40,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "RDAP, DNSSEC, DoH, X.509 certificates, domain registration",
+        "buyVsBuild": "Buy $0.30 vs self-dev $3-8 + 40 min + 4 skill sets. Buy saves 92%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开域名信息整合；无敏感操作"
+      }
     }
   ],
   "freePages": {
