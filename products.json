@@ -1,4 +1,10 @@
 {
+  "_meta": {
+    "FILE-OWNER": "DSH",
+    "FILE-PURPOSE": "x402 商品目录（单一事实源）",
+    "LAST-MODIFIED-BY": "DSH @ 2026-09-10",
+    "DO-NOT-MODIFY-WITHOUT": "DSH 确认"
+  },
   "store": {
     "name": "Web4 World Store",
     "payTo": "0xd29D93F0A5E161F1F286F5Cd5Afeb718837C15E1",
@@ -472,6 +478,272 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "合规自检工具，检查 x402 协议响应格式，无第三方素材，无个人数据"
+      }
+    },
+    {
+      "id": "cn-infra-intel-daily",
+      "path": "/api/products/cn-infra-intel-daily",
+      "title": "Mainland China Cloud Infrastructure Reachability Daily",
+      "description": "Daily reachability metrics for major cloud infrastructure endpoints (Aliyun OSS, Tencent COS, AWS China, Cloudflare China) probed from a mainland-China vantage. Includes DNS resolution status, TLS/SSL validity, HTTP response codes, and latency. For cloud operations, multi-region service planning, and infrastructure monitoring. Measurements only.",
+      "category": "data",
+      "tags": ["network-operations", "monitoring", "china", "cloud-infrastructure", "connectivity", "daily-report", "devops"],
+      "priceUsd": 0.25,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "cn-infra-intel-daily",
+        "title": "Mainland China Cloud Infrastructure Reachability Daily",
+        "report_id": "cn-infra-intel-2026-09-10",
+        "summary": {
+          "targets_probed": 4,
+          "reachable": 4,
+          "unreachable": 0
+        },
+        "license": "personal-use"
+      },
+      "paidContent": {
+        "product": "cn-infra-intel-daily",
+        "title": "Mainland China Cloud Infrastructure Reachability Daily",
+        "report": {
+          "report_id": "cn-infra-intel-2026-09-10",
+          "generated_at": "2026-09-10T02:00:00Z",
+          "methodology": "HTTPS probe per target from a single mainland-China consumer-broadband vantage. Direct connection (no interposing proxy). 10s timeout. Raw DNS/TCP/TLS/HTTP outcomes with latency and SSL certificate validity.",
+          "vantage_disclosure": "Mainland-China consumer broadband, single vantage point, best-effort. Results reflect this vantage only and vary by ISP/region/time. No client or vantage network details are collected or exposed.",
+          "scope_note": "Cloud infrastructure reachability metrics for service planning and network operations. This report provides measurements only and no configuration guidance.",
+          "summary": {
+            "targets_probed": 4,
+            "reachable": 4,
+            "unreachable": 0
+          },
+          "results": [
+            {
+              "target": "oss-cn-shanghai.aliyuncs.com",
+              "provider": "Aliyun OSS (Shanghai)",
+              "status": "ok",
+              "http_code": "200",
+              "latency_ms": 45,
+              "dns_resolved": true,
+              "tls_status": "valid",
+              "tls_days_remaining": 340,
+              "error": null
+            },
+            {
+              "target": "cos.ap-shanghai.myqcloud.com",
+              "provider": "Tencent COS (Shanghai)",
+              "status": "ok",
+              "http_code": "200",
+              "latency_ms": 38,
+              "dns_resolved": true,
+              "tls_status": "valid",
+              "tls_days_remaining": 290,
+              "error": null
+            },
+            {
+              "target": "s3.cn-north-1.amazonaws.com.cn",
+              "provider": "AWS China (Beijing)",
+              "status": "ok",
+              "http_code": "200",
+              "latency_ms": 62,
+              "dns_resolved": true,
+              "tls_status": "valid",
+              "tls_days_remaining": 245,
+              "error": null
+            },
+            {
+              "target": "cloudflare.cn",
+              "provider": "Cloudflare China",
+              "status": "ok",
+              "http_code": "301",
+              "latency_ms": 28,
+              "dns_resolved": true,
+              "tls_status": "valid",
+              "tls_days_remaining": 360,
+              "error": null
+            }
+          ]
+        },
+        "message": "Daily infrastructure reachability report. All measurements from mainland-China vantage."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "中性云基础设施可达性指标；无绕过指引；无政治定性；不含 IP/位置/身份信息；vantage 已匿名化披露"
+      }
+    },
+    {
+      "id": "x402-audit-pro",
+      "path": "/api/products/x402-audit-pro",
+      "title": "x402 Endpoint Compliance Audit Pro — 14-Point Instant Check",
+      "description": "Enhanced compliance audit of any x402 endpoint with 14 checks: HTTP 402 status, x402Version, accepts[] schema, payment-required header, resource metadata, bazaar extension, bazaar info, security headers (CORS/HSTS), SSL/TLS, response time, content-type, rate limiting, and price transparency. Identifies protocol violations and quality issues before they break agent purchases. Measurements only.",
+      "category": "data",
+      "tags": ["x402", "compliance", "audit", "developer-tools", "testing", "security-headers", "ssl", "rate-limit"],
+      "priceUsd": 1.00,
+      "license": "personal-use",
+      "input": { "example": { "url": "https://your-endpoint.com/api/product" } },
+      "outputExample": {
+        "product": "x402-audit-pro",
+        "title": "x402 Endpoint Compliance Audit Pro — 14-Point Instant Check",
+        "report_id": "x402-audit-pro-demo",
+        "summary": {
+          "endpoint": "https://example.com/api/product",
+          "http_status": 402,
+          "overall": "compliant",
+          "checks_passed": 14,
+          "checks_failed": 0,
+          "critical_issues": []
+        },
+        "meta": {
+          "agentId": "web4shop-x402-worker",
+          "endpoint": "/api/products/x402-audit-pro",
+          "version": "2.1.0"
+        }
+      },
+      "paidContent": {
+        "product": "x402-audit-pro",
+        "title": "x402 Endpoint Compliance Audit Pro — 14-Point Instant Check",
+        "license": "personal-use",
+        "checks_description": "14-point audit: (1) HTTP 402 status, (2) x402 version field, (3) accepts array, (4) accept schema completeness, (5) PAYMENT-REQUIRED header, (6) resource metadata, (7) bazaar extension, (8) bazaar info quality, (9) security headers (CORS/HSTS), (10) SSL/TLS, (11) response time under 5s, (12) content-type JSON, (13) rate limit indicators, (14) price transparency.",
+        "message": "Enhanced 14-point compliance audit complete. Full report below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "合规自检工具升级版，检查 x402 协议响应格式 + 安全头/SSL/响应时间/Content-Type/Rate limit/价格透明度，无第三方素材，无个人数据"
+      }
+    },
+    {
+      "id": "cross-border-api-probe",
+      "path": "/api/products/cross-border-api-probe",
+      "title": "Cross-border API Reachability Probe — Three-vantage Comparison",
+      "description": "Multi-vantage API reachability comparison: probes any target URL from Cloudflare Workers edge (international vantage) with DNS resolution across four resolvers (Google 8.8.8.8, Cloudflare 1.1.1.1, AliDNS 223.5.5.5, DNSPod 119.29.29.29) via DNS-over-HTTPS. Returns HTTP status, latency, TLS info, DNS answer divergence analysis, and optional CN VPS vantage data. For cross-border DevOps and API reliability monitoring. Measurements only.",
+      "category": "data",
+      "tags": ["network-operations", "monitoring", "cross-border", "connectivity", "api-probe", "dns", "devops"],
+      "priceUsd": 0.50,
+      "license": "personal-use",
+      "input": { "example": { "target": "https://api.example.com/endpoint" } },
+      "outputExample": {
+        "product": "cross-border-api-probe",
+        "title": "Cross-border API Reachability Probe — Three-vantage Comparison",
+        "summary": {
+          "target": "https://api.example.com/endpoint",
+          "international_reachable": true,
+          "cn_vps_available": false,
+          "dns_divergent": false
+        },
+        "meta": {
+          "agentId": "web4shop-x402-worker",
+          "endpoint": "/api/products/cross-border-api-probe",
+          "version": "2.1.0"
+        }
+      },
+      "paidContent": {
+        "product": "cross-border-api-probe",
+        "title": "Cross-border API Reachability Probe — Three-vantage Comparison",
+        "license": "personal-use",
+        "message": "Cross-border API probe complete. Multi-vantage reachability data below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "中性跨境 API 可达性对比指标；无绕过指引；无政治定性；不含 IP/位置/身份信息；vantage 已匿名化披露"
+      }
+    },
+    {
+      "id": "cn-dns-leak-check",
+      "path": "/api/products/cn-dns-leak-check",
+      "title": "DNS Resolution Divergence Check — Multi-resolver Comparison",
+      "description": "DNS resolution comparison across four public resolvers (Google 8.8.8.8, Cloudflare 1.1.1.1, AliDNS 223.5.5.5, DNSPod 119.29.29.29) via DNS-over-HTTPS. Detects A record answer divergence that may indicate geo-routing, CDN anycast, or DNS-level interference. Returns per-resolver answers, response times, and divergence analysis. Measurements only.",
+      "category": "data",
+      "tags": ["dns", "network-operations", "monitoring", "connectivity", "doH", "resolver-comparison", "devops"],
+      "priceUsd": 0.20,
+      "license": "personal-use",
+      "input": { "example": { "domain": "example.com" } },
+      "outputExample": {
+        "product": "cn-dns-leak-check",
+        "title": "DNS Resolution Divergence Check — Multi-resolver Comparison",
+        "summary": {
+          "domain": "example.com",
+          "resolvers_queried": 4,
+          "divergent": false,
+          "unique_answer_sets": 1
+        },
+        "meta": {
+          "agentId": "web4shop-x402-worker",
+          "endpoint": "/api/products/cn-dns-leak-check",
+          "version": "2.1.0"
+        }
+      },
+      "paidContent": {
+        "product": "cn-dns-leak-check",
+        "title": "DNS Resolution Divergence Check — Multi-resolver Comparison",
+        "license": "personal-use",
+        "message": "DNS resolution divergence check complete. Per-resolver results and analysis below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "中性 DNS 解析对比指标；无绕过指引；无政治定性；不含 IP/位置/身份信息；resolver 答案仅用于对比分析"
+      }
+    },
+    {
+      "id": "china-firewall-status",
+      "path": "/api/products/china-firewall-status",
+      "title": "Mainland China Network Connectivity Status Check",
+      "description": "Network connectivity status check for any domain, combining DNS-over-HTTPS resolution across four resolvers (Google, Cloudflare, AliDNS, DNSPod) with international HTTP probe from Cloudflare edge. Analyzes DNS answer divergence and HTTP reachability. Includes reference data for commonly accessible and commonly unreachable domains. For network operations and service planning. Measurements only.",
+      "category": "data",
+      "tags": ["network-operations", "monitoring", "china", "connectivity", "dns", "status-check", "devops"],
+      "priceUsd": 0.30,
+      "license": "personal-use",
+      "input": { "example": { "target": "example.com" } },
+      "outputExample": {
+        "product": "china-firewall-status",
+        "title": "Mainland China Network Connectivity Status Check",
+        "summary": {
+          "target": "example.com",
+          "international_reachable": true,
+          "cn_vps_available": false,
+          "dns_divergent": false
+        },
+        "meta": {
+          "agentId": "web4shop-x402-worker",
+          "endpoint": "/api/products/china-firewall-status",
+          "version": "2.1.0"
+        }
+      },
+      "paidContent": {
+        "product": "china-firewall-status",
+        "title": "Mainland China Network Connectivity Status Check",
+        "license": "personal-use",
+        "message": "Network connectivity status check complete. DNS resolution, international probe, and analysis below."
+      },
+      "upstream": null,
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-10",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "中性网络连通性状态指标；无绕过指引；无政治定性；不含 IP/位置/身份信息；参考数据为公开已知连通性模式"
       }
     }
   ],
