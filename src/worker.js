@@ -1959,11 +1959,11 @@ Sitemap: ${url.origin}/sitemap.xml
 
     // ===== 免费层（获客磁铁；配额走 KV 按天/IP 限次）=====
     // 设计: US 视角探测免费（CF 边缘天然 vantage），CN 视角物理上必须付费探针 → 天然漏斗
-    async function freeQuota(limit) {
+    async function freeQuota(limit, endpointName) {
       if (!env.SETTLEMENTS) return { ok: true, remaining: limit }; // KV 未绑则放行（降级）
       const ip = request.headers.get("cf-connecting-ip") || "unknown";
       const day = new Date().toISOString().slice(0, 10);
-      const key = `freequota:${ip}:${day}`;
+      const key = `freequota:${endpointName || "default"}:${ip}:${day}`;
       const cur = parseInt((await env.SETTLEMENTS.get(key)) || "0", 10);
       if (cur >= limit) return { ok: false, remaining: 0 };
       await env.SETTLEMENTS.put(key, String(cur + 1), { expirationTtl: 172800 });
@@ -1990,7 +1990,7 @@ Sitemap: ${url.origin}/sitemap.xml
       if (!target) return new Response(JSON.stringify({ error: "missing ?url=", free_quota: "3/day per IP" }), { status: 400, headers: jsonHeaders() });
       const guardErr = guardPublicHttp(target);
       if (guardErr) return new Response(JSON.stringify({ error: guardErr }), { status: 400, headers: jsonHeaders() });
-      const quota = await freeQuota(3);
+      const quota = await freeQuota(3, "us-probe");
       if (!quota.ok) {
         return new Response(JSON.stringify({
           error: "free quota exhausted (3/day per IP)",
@@ -2025,7 +2025,7 @@ Sitemap: ${url.origin}/sitemap.xml
       if (!target) return new Response(JSON.stringify({ error: "missing ?url=", free_quota: "1/day per IP" }), { status: 400, headers: jsonHeaders() });
       const guardErr = guardPublicHttp(target);
       if (guardErr) return new Response(JSON.stringify({ error: guardErr }), { status: 400, headers: jsonHeaders() });
-      const quota = await freeQuota(1);
+      const quota = await freeQuota(1, "x402-audit");
       if (!quota.ok) {
         return new Response(JSON.stringify({
           error: "free audit used today (1/day per IP)",
@@ -2052,6 +2052,81 @@ Sitemap: ${url.origin}/sitemap.xml
           bundle: { product: "x402-launch-kit", price_usd: 1.20, url: STORE_ORIGIN + "/api/products/x402-launch-kit", note: "14pt + 8pt + setup guide" },
         },
       }, null, 2), { status: 200, headers: jsonHeaders() });
+    }
+
+    // 免费 DNS 查询 — 第三层漏斗入口
+    if (path === "/api/free/dns-lookup") {
+      const domain = url.searchParams.get("domain");
+      if (!domain) return new Response(JSON.stringify({ error: "missing ?domain=", free_quota: "5/day per IP" }), { status: 400, headers: jsonHeaders() });
+      const quota = await freeQuota(5, "dns-lookup");
+      if (!quota.ok) {
+        return new Response(JSON.stringify({
+          error: "free DNS quota exhausted (5/day per IP)",
+          upgrade: {
+            full_dns: { product: "dns-lookup", price_usd: 0.001, url: STORE_ORIGIN + "/api/products/dns-lookup", note: "unlimited DNS lookups, 6 record types" },
+            dnssec: { product: "dnssec-check", price_usd: 0.15, url: STORE_ORIGIN + "/api/products/dnssec-check", note: "DNSSEC validation + chain of trust" },
+            domain_bundle: { product: "domain-intel-full", price_usd: 0.30, url: STORE_ORIGIN + "/api/products/domain-intel-full", note: "WHOIS + DNSSEC + DNS + SSL bundle" },
+          },
+        }), { status: 429, headers: jsonHeaders() });
+      }
+      // 免费：只给 A 记录
+      let result = {};
+      try { result = await dohQuery(domain, "A"); } catch (e) { result = { error: String(e).substring(0, 80) }; }
+      return new Response(JSON.stringify({
+        product: "free-dns-lookup",
+        domain,
+        free_remaining_today: quota.remaining,
+        A_records: result,
+        note: "Free tier shows A records only. Upgrade for AAAA/MX/TXT/NS/CNAME + DNSSEC validation.",
+        upsell: {
+          full_dns: { product: "dns-lookup", price_usd: 0.001, url: STORE_ORIGIN + "/api/products/dns-lookup" },
+          domain_bundle: { product: "domain-intel-full", price_usd: 0.30, url: STORE_ORIGIN + "/api/products/domain-intel-full" },
+        },
+      }, null, 2), { status: 200, headers: jsonHeaders() });
+    }
+
+    // 免费安全头检查 — 第四层漏斗入口
+    if (path === "/api/free/security-check") {
+      const target = url.searchParams.get("url");
+      if (!target) return new Response(JSON.stringify({ error: "missing ?url=", free_quota: "3/day per IP" }), { status: 400, headers: jsonHeaders() });
+      const guardErr = guardPublicHttp(target);
+      if (guardErr) return new Response(JSON.stringify({ error: guardErr }), { status: 400, headers: jsonHeaders() });
+      const quota = await freeQuota(3, "security-check");
+      if (!quota.ok) {
+        return new Response(JSON.stringify({
+          error: "free security check quota exhausted (3/day per IP)",
+          upgrade: {
+            full_headers: { product: "security-headers-check", price_usd: 0.15, url: STORE_ORIGIN + "/api/products/security-headers-check", note: "10+ header audit with score and recommendations" },
+            ssl: { product: "ssl-cert-check", price_usd: 0.15, url: STORE_ORIGIN + "/api/products/ssl-cert-check" },
+            bundle: { product: "site-security-audit", price_usd: 0.40, url: STORE_ORIGIN + "/api/products/site-security-audit", note: "SSL + headers + broken links bundle" },
+          },
+        }), { status: 429, headers: jsonHeaders() });
+      }
+      // 免费：只检查 3 个头
+      try {
+        const resp = await fetch(target, { method: "HEAD", signal: AbortSignal.timeout(8000), redirect: "follow" });
+        const checks = [
+          { name: "strict_transport_security", present: resp.headers.has("strict-transport-security") },
+          { name: "content_security_policy", present: resp.headers.has("content-security-policy") },
+          { name: "x_frame_options", present: resp.headers.has("x-frame-options") },
+        ];
+        const passed = checks.filter(c => c.present).length;
+        return new Response(JSON.stringify({
+          product: "free-security-check",
+          target,
+          free_remaining_today: quota.remaining,
+          checks_shown: 3,
+          checks_total: 10,
+          passed: passed,
+          note: "Free tier shows 3 of 10 checks. Upgrade for full audit with score, grade, and recommendations.",
+          upsell: {
+            full: { product: "security-headers-check", price_usd: 0.15, url: STORE_ORIGIN + "/api/products/security-headers-check" },
+            bundle: { product: "site-security-audit", price_usd: 0.40, url: STORE_ORIGIN + "/api/products/site-security-audit" },
+          },
+        }, null, 2), { status: 200, headers: jsonHeaders() });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: String(e).substring(0, 120) }), { status: 500, headers: jsonHeaders() });
+      }
     }
 
     // 结算记录（哨兵专用，令牌保护；外部只知链上公开数据，聚合列表不公开）
@@ -2176,6 +2251,7 @@ Sitemap: ${url.origin}/sitemap.xml
             discover:
               "Send GET to any product path to receive HTTP 402 with x402 v2 payment requirements.",
             free_pages: Object.keys(freePages),
+            free_api: ["/api/free/us-probe", "/api/free/x402-audit", "/api/free/dns-lookup", "/api/free/security-check"],
           },
           null,
           2
