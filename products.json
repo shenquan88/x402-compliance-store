@@ -3092,98 +3092,235 @@
         "noPersonalData": true,
         "note": "公开域名情报整合；无敏感操作"
       }
-    }
-  ],
-  "freePages": {
-    "/titanium": {
-      "title": "Ferrotitanium & Refractory Materials — Buy / Sell Desk | 钛铁 · 耐火材料 采购销售",
-      "updated": "2026-09-09",
-      "buy": {
-        "zh": "长期收购：钛精矿、钛晶矿、金红石、海绵钛、钛渣、铁豆、铝粉（冶金级）",
-        "en": "Standing demand: titanium concentrate, titanium crystal ore, rutile, titanium sponge, titanium slag, iron beans, aluminium powder (metallurgical grade)"
+    },
+    {
+      "id": "llm-generate",
+      "path": "/api/products/llm-generate",
+      "title": "LLM Text Generation — Cloudflare Workers AI (Gemma 2B / GPT-OSS 120B)",
+      "description": "Pay-per-use LLM text generation via Cloudflare Workers AI. Send a prompt, get AI-generated text response. Supports multiple models: gemma-2b-it (fast, cheap), gpt-oss-120b (powerful). OpenAI-compatible response format. No API key needed — pay USDC via x402. Perfect for AI agents needing text generation without managing API credentials.",
+      "category": "ai",
+      "tags": [
+        "llm",
+        "ai",
+        "text-generation",
+        "gemma",
+        "gpt",
+        "openai-compatible",
+        "inference"
+      ],
+      "priceUsd": 0.01,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "llm-generate",
+        "model": "@cf/google/gemma-2b-it",
+        "prompt": "What is x402?",
+        "response": "x402 is an HTTP payment protocol...",
+        "tokens_used": 150
       },
-      "sell": {
-        "zh": "长期供应：钛铁（FeTi 70 / FeTi 30）、钛铝酸钙耐火材料",
-        "en": "Regular supply: ferrotitanium (FeTi 70 / FeTi 30), calcium-titanate alumina refractory materials"
+      "paidContent": {
+        "product": "llm-generate",
+        "title": "LLM Text Generation",
+        "message": "AI inference complete."
       },
-      "terms": {
-        "zh": "现货/长单均可谈，量大从优，欢迎厂检。",
-        "en": "Spot and contract volumes welcome; serious inquiries preferred."
+      "selfDevelopCost": {
+        "tokenCostUsd": "$10-50/month API fees",
+        "timeMinutes": 120,
+        "requiresInfrastructure": "Cloudflare Workers AI binding + GPU infrastructure",
+        "requiresExpertise": "LLM model selection, prompt engineering, OpenAI API format, token counting",
+        "buyVsBuild": "Buy $0.01 vs self-hosting GPU ($100+/month). Buy saves 99%+. No API key management needed."
       },
-      "contact_hint": {
-        "zh": "联系方式在付费商品 titanium-business-contact 中（付费 = 有效询盘过滤，双方都省时间）。",
-        "en": "Contact details are in the paid listing titanium-business-contact (payment filters for serious inquiries)."
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "AI推理服务；用户输入不存储；无敏感操作"
+      }
+    },
+    {
+      "id": "llm-generate-pro",
+      "path": "/api/products/llm-generate-pro",
+      "title": "LLM Text Generation Pro — GPT-OSS 120B High-Quality Reasoning",
+      "description": "Premium LLM text generation using @cf/openai/gpt-oss-120B — a 120B parameter model for complex reasoning, code generation, analysis, and creative writing. OpenAI-compatible chat format with system/user/assistant messages. Best quality available on x402. Pay per request, no subscription.",
+      "category": "ai",
+      "tags": [
+        "llm",
+        "ai",
+        "gpt",
+        "reasoning",
+        "code-generation",
+        "analysis",
+        "premium"
+      ],
+      "priceUsd": 0.05,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "llm-generate-pro",
+        "model": "@cf/openai/gpt-oss-120b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Explain quantum computing"
+          }
+        ],
+        "response": "Quantum computing uses..."
       },
-      "company": {
-        "name_zh": "锦州国泰实业有限公司",
-        "name_en": "Jinzhou Guotai Industrial Co., Ltd.",
-        "website": "https://www.jzgtsy.com/",
-        "location": "Jinzhou City, Liaoning Province, China（辽宁省锦州市）",
-        "founded": 2006,
-        "intro_en": "A comprehensive enterprise of metal smelting and refractory manufacturing, located in the 'Liaoxi Corridor' in Jinzhou City, Liaoning Province — a transportation hub connecting Northeast and North China, with convenient highway and railway transport and excellent sea freight conditions."
+      "paidContent": {
+        "product": "llm-generate-pro",
+        "title": "LLM Pro Generation",
+        "message": "Premium AI inference complete."
       },
-      "contact_hint_top": {
-        "zh": "📞 出于安全考虑，本页不展示联系方式。联系电话与邮箱在付费商品 titanium-business-contact（$0.10）中，购买后立即解锁。付费 = 有效询盘过滤，双方省时间。",
-        "en": "📞 For safety reasons, contact details are not shown on this page. Phones and email are unlocked via the paid listing titanium-business-contact ($0.10) — payment filters for serious inquiries."
+      "selfDevelopCost": {
+        "tokenCostUsd": "$50-200/month GPU costs",
+        "timeMinutes": 180,
+        "requiresInfrastructure": "120B parameter model + GPU cluster",
+        "requiresExpertise": "Large model deployment, chat template, safety filtering, token management",
+        "buyVsBuild": "Buy $0.05 vs self-hosting 120B model ($500+/month GPU). Buy saves 99%+. No infrastructure needed."
       },
-      "keywords": {
-        "en": [
-          "titanium",
-          "ferrotitanium",
-          "FeTi 70",
-          "FeTi 30",
-          "calcium titanate alumina refractory",
-          "titanium concentrate",
-          "rutile",
-          "titanium sponge",
-          "titanium slag",
-          "titanium crystal ore"
-        ],
-        "zh": [
-          "钛",
-          "钛铁",
-          "钛铝酸钙",
-          "钛精矿",
-          "钛晶矿",
-          "海绵钛",
-          "钛渣",
-          "耐火材料"
-        ],
-        "es": [
-          "titanio",
-          "ferrotitanio",
-          "refractario"
-        ],
-        "de": [
-          "Titan",
-          "Ferrotitan",
-          "Feuerfestmaterial"
-        ],
-        "fr": [
-          "titane",
-          "ferrotitane",
-          "réfractaire"
-        ],
-        "ru": [
-          "титан",
-          "ферротитан",
-          "огнеупор"
-        ],
-        "ja": [
-          "チタン",
-          "フェロチタン",
-          "耐火物"
-        ],
-        "ko": [
-          "티타늄",
-          "페로티탄",
-          "내화재"
-        ]
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "高级AI推理；用户输入不存储"
+      }
+    },
+    {
+      "id": "llm-embed",
+      "path": "/api/products/llm-embed",
+      "title": "Vector Embedding Service — BGE-M3 Multilingual (1024-dim)",
+      "description": "Generate 1024-dimensional vector embeddings for any text using @cf/baai/bge-m3. Supports 100+ languages. Perfect for semantic search, RAG pipelines, clustering, and similarity matching. Returns embedding vector + token count. No API key needed — pay USDC via x402.",
+      "category": "ai",
+      "tags": [
+        "embedding",
+        "vector",
+        "semantic-search",
+        "rag",
+        "bge-m3",
+        "multilingual"
+      ],
+      "priceUsd": 0.001,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "llm-embed",
+        "model": "@cf/baai/bge-m3",
+        "text": "Hello world",
+        "dimensions": 1024,
+        "embedding_length": 1024
       },
-      "about": {
-        "zh": "锦州国泰实业有限公司（2006 年成立，辽宁锦州）是集金属冶炼与耐火材料制造于一体的综合型企业，地处连接东北与华北的交通枢纽辽西走廊，公路铁路海运条件优越。钛铁经营规模大，在国内市场占有重要份额，具备大批量稳定供应能力，支持厂检。",
-        "en": "Jinzhou Guotai Industrial Co., Ltd. (est. 2006, Jinzhou, Liaoning) is a comprehensive enterprise of metal smelting and refractory manufacturing, located in the Liaoxi Corridor — the transport hub connecting Northeast and North China, with strong highway, rail and sea freight access. We operate at large scale in ferrotitanium and hold a significant share of the domestic market, with stable bulk supply capacity. Plant inspection welcome."
+      "paidContent": {
+        "product": "llm-embed",
+        "title": "Vector Embedding",
+        "message": "Embedding generated."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$5-20/month",
+        "timeMinutes": 60,
+        "requiresInfrastructure": "Embedding model + GPU",
+        "requiresExpertise": "Vector embeddings, cosine similarity, RAG architecture",
+        "buyVsBuild": "Buy $0.001 per call vs OpenAI API + key management. Simpler billing via x402."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "向量化服务；输入不存储"
+      }
+    },
+    {
+      "id": "llm-sentiment",
+      "path": "/api/products/llm-sentiment",
+      "title": "AI Sentiment Analysis — DistilBERT SST-2",
+      "description": "Classify text sentiment as positive or negative using @cf/huggingface/distilbert-sst-2-int8. Fast, accurate, multilingual. Returns sentiment label + confidence score. Perfect for brand monitoring, review analysis, social media tracking. No API key — pay USDC via x402.",
+      "category": "ai",
+      "tags": [
+        "sentiment",
+        "analysis",
+        "nlp",
+        "classification",
+        "distilbert",
+        "brand-monitoring"
+      ],
+      "priceUsd": 0.005,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "llm-sentiment",
+        "text": "This product is amazing!",
+        "label": "POSITIVE",
+        "confidence": 0.9998
+      },
+      "paidContent": {
+        "product": "llm-sentiment",
+        "title": "Sentiment Analysis",
+        "message": "Analysis complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$2-10/month",
+        "timeMinutes": 30,
+        "requiresInfrastructure": "ML model + GPU",
+        "requiresExpertise": "NLP classification, model deployment, confidence calibration",
+        "buyVsBuild": "Buy $0.005 vs self-hosting model. No GPU needed."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "情感分析；输入不存储"
+      }
+    },
+    {
+      "id": "llm-summarize",
+      "path": "/api/products/llm-summarize",
+      "title": "AI Text Summarization — LLM-Powered Content Compression",
+      "description": "Summarize any text (up to 5000 chars) using LLM. Send raw text, get a concise summary. Uses @cf/google/gemma-2b-it for fast, accurate summarization. Returns summary + original word count + compression ratio. Perfect for content curation, news aggregation, document analysis.",
+      "category": "ai",
+      "tags": [
+        "summarization",
+        "ai",
+        "nlp",
+        "content",
+        "compression",
+        "gemma"
+      ],
+      "priceUsd": 0.02,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "llm-summarize",
+        "original_words": 500,
+        "summary_words": 50,
+        "compression_ratio": "10:1"
+      },
+      "paidContent": {
+        "product": "llm-summarize",
+        "title": "AI Summarization",
+        "message": "Summary generated."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$10-30/month",
+        "timeMinutes": 60,
+        "requiresInfrastructure": "LLM + GPU",
+        "requiresExpertise": "Prompt engineering, summarization techniques",
+        "buyVsBuild": "Buy $0.02 vs OpenAI API + key. Simpler via x402."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "文本摘要；输入不存储"
       }
     }
-  }
+  ]
 }
