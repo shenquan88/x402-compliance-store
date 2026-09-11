@@ -2233,6 +2233,91 @@ async function handlePaid(request, path, product, env, ctx) {
         return new Response(JSON.stringify({ ...product.paidContent, ...result, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
       }
 
+      // llm-generate: basic text generation via Workers AI (Gemma 2B)
+      if (product.id === "llm-generate") {
+        const prompt = (new URL(request.url).searchParams.get("prompt") || "").trim();
+        if (!prompt) { return new Response(JSON.stringify({ error: "Missing ?prompt= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const aiResp = await env.AI.run("@cf/google/gemma-2b-it", { prompt: prompt, max_tokens: 256, temperature: 0.7 });
+          const text = aiResp.response || aiResp.result || JSON.stringify(aiResp).substring(0, 500);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, model: "@cf/google/gemma-2b-it", prompt: prompt.substring(0, 200), response: text, tokens_used: aiResp.usage ? aiResp.usage.total_tokens : null, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: "AI inference failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // llm-generate-pro: premium generation via GPT-OSS 120B
+      if (product.id === "llm-generate-pro") {
+        const prompt = (new URL(request.url).searchParams.get("prompt") || "").trim();
+        const systemPrompt = (new URL(request.url).searchParams.get("system") || "You are a helpful assistant.").trim();
+        if (!prompt) { return new Response(JSON.stringify({ error: "Missing ?prompt= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const messages = [{ role: "system", content: systemPrompt.substring(0, 500) }, { role: "user", content: prompt.substring(0, 2000) }];
+          const aiResp = await env.AI.run("@cf/openai/gpt-oss-120b", { messages: messages, max_tokens: 512, temperature: 0.7 });
+          const text = aiResp.response || (aiResp.choices && aiResp.choices[0] ? aiResp.choices[0].message.content : "") || JSON.stringify(aiResp).substring(0, 500);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, model: "@cf/openai/gpt-oss-120b", system_prompt: systemPrompt.substring(0, 100), prompt: prompt.substring(0, 200), response: text, tokens_used: aiResp.usage ? aiResp.usage.total_tokens : null, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: "AI inference failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // llm-embed: vector embedding via BGE-M3
+      if (product.id === "llm-embed") {
+        const text = (new URL(request.url).searchParams.get("text") || "").trim();
+        if (!text) { return new Response(JSON.stringify({ error: "Missing ?text= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const aiResp = await env.AI.run("@cf/baai/bge-m3", { text: [text.substring(0, 5000)] });
+          const embedding = (aiResp.data && aiResp.data[0]) ? aiResp.data[0] : (Array.isArray(aiResp) ? aiResp[0] : aiResp);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, model: "@cf/baai/bge-m3", text: text.substring(0, 100), dimensions: Array.isArray(embedding) ? embedding.length : null, embedding: embedding, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: "Embedding failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // llm-sentiment: sentiment analysis via DistilBERT
+      if (product.id === "llm-sentiment") {
+        const text = (new URL(request.url).searchParams.get("text") || "").trim();
+        if (!text) { return new Response(JSON.stringify({ error: "Missing ?text= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const aiResp = await env.AI.run("@cf/huggingface/distilbert-sst-2-int8", { text: text.substring(0, 5000) });
+          let label = "UNKNOWN", confidence = 0;
+          if (Array.isArray(aiResp) && aiResp[0]) { label = aiResp[0].label || "UNKNOWN"; confidence = aiResp[0].score || 0; }
+          else if (aiResp.label) { label = aiResp.label; confidence = aiResp.score || 0; }
+          else { label = JSON.stringify(aiResp).substring(0, 100); }
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, model: "@cf/huggingface/distilbert-sst-2-int8", text: text.substring(0, 100), label: label, confidence: Math.round(confidence * 10000) / 10000, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: "Sentiment analysis failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // llm-summarize: text summarization via Gemma 2B
+      if (product.id === "llm-summarize") {
+        const text = (new URL(request.url).searchParams.get("text") || "").trim();
+        if (!text) { return new Response(JSON.stringify({ error: "Missing ?text= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const truncated = text.substring(0, 5000);
+          const prompt = `Summarize the following text in 2-3 sentences:\n\n${truncated}`;
+          const aiResp = await env.AI.run("@cf/google/gemma-2b-it", { prompt: prompt, max_tokens: 200, temperature: 0.3 });
+          const summary = aiResp.response || aiResp.result || "";
+          const origWords = truncated.split(/\s+/).length;
+          const sumWords = summary.split(/\s+/).filter(w => w.length > 0).length;
+          const ratio = sumWords > 0 ? Math.round(origWords / sumWords) + ":1" : "N/A";
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, model: "@cf/google/gemma-2b-it", original_words: origWords, summary_words: sumWords, compression_ratio: ratio, summary: summary, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, error: "Summarization failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
       return new Response(
         JSON.stringify({ ...product.paidContent, receipt }, null, 2),
         { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
@@ -2374,7 +2459,7 @@ ${urls.map((u) => `  <url><loc>${origin}${u}</loc></url>`).join("\n")}
         name_for_human: "web4shop — x402 Paid API Services",
         name_for_model: "web4shop_x402_services",
         description_for_human: "Pay-per-call API services: mainland-China vantage connectivity checks, CN/US infrastructure snapshots, x402 endpoint compliance audits (8-point basic + 14-point pro), cross-border API probing, DNS resolution divergence checks, cloud infrastructure reachability daily. Settled in USDC on Base via x402.",
-        description_for_model: "x402 protocol paid API catalog. 50 products (42 single + 8 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01, redirect-tracer $0.05. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, password-strength $0.02, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, content-type-detector $0.02, openapi-validate $0.30. Auth: jwt-decode $0.02. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05, ip-info $0.05, cron-parser $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
+        description_for_model: "x402 protocol paid API catalog. 55 products (47 single + 8 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01, redirect-tracer $0.05. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, password-strength $0.02, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, content-type-detector $0.02, openapi-validate $0.30. Auth: jwt-decode $0.02. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05, ip-info $0.05, cron-parser $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. AI: llm-generate .01, llm-generate-pro .05, llm-embed .001, llm-sentiment .005, llm-summarize .02. Pay USDC on Base via x402 v2.",
         api: { type: "openapi", url: `${origin}/openapi.json`, is_user_authenticated: false },
         auth: { type: "x402", protocol: "x402/v2", network: "base", asset: "USDC" },
         contact_email: "use on-chain memo via /support",
