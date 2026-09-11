@@ -2829,6 +2829,269 @@
         "noPersonalData": true,
         "note": "生成代码模板（公开协议知识），探测仅读公开响应头/形状"
       }
+    },
+    {
+      "id": "email-auth-check",
+      "path": "/api/products/email-auth-check",
+      "title": "Email Authentication Audit — SPF + DKIM + DMARC Full Analysis",
+      "description": "Comprehensive email authentication check for any domain: SPF record parsing (including nested includes and redirects), DKIM selector lookup (default selectors tested), DMARC policy analysis (p=none/quarantine/reject, pct, rua reports). Identifies misconfigured or missing email security records. Critical for deliverability and anti-phishing.",
+      "category": "tools",
+      "tags": [
+        "email",
+        "spf",
+        "dkim",
+        "dmarc",
+        "security",
+        "authentication"
+      ],
+      "priceUsd": 0.25,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "email-auth-check",
+        "fields": [
+          "domain",
+          "spf",
+          "dkim",
+          "dmarc",
+          "overall_score",
+          "recommendations"
+        ]
+      },
+      "paidContent": {
+        "product": "email-auth-check",
+        "title": "Email Authentication Audit",
+        "message": "SPF + DKIM + DMARC analysis complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$3-8",
+        "timeMinutes": 45,
+        "requiresInfrastructure": "DoH DNS queries",
+        "requiresExpertise": "SPF syntax (include/redirect/mechanisms), DKIM selectors and key formats, DMARC policy tags, RFC 7208/6376/7489",
+        "buyVsBuild": "Buy $0.25 vs self-dev $3-8 + 45 min + 3 RFC expertise. Buy saves 91%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开 DNS 邮件认证记录检查；无敏感操作"
+      }
+    },
+    {
+      "id": "performance-analyzer",
+      "path": "/api/products/performance-analyzer",
+      "title": "Web Performance Analyzer — TTFB + Resources + Cache + DOM Analysis",
+      "description": "Deep performance analysis of any URL: Time to First Byte (TTFB), total load time, response size, number of resources (scripts/styles/images), cache policy headers (Cache-Control, ETag, Last-Modified), compression (gzip/br), DOM size estimation, and performance grade with recommendations. Goes far beyond simple health-check.",
+      "category": "tools",
+      "tags": [
+        "performance",
+        "ttfb",
+        "cache",
+        "optimization",
+        "web",
+        "audit"
+      ],
+      "priceUsd": 0.15,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "performance-analyzer",
+        "fields": [
+          "ttfb_ms",
+          "total_time_ms",
+          "response_size_kb",
+          "resource_count",
+          "cache_policy",
+          "compression",
+          "dom_size_estimate",
+          "grade",
+          "recommendations"
+        ]
+      },
+      "paidContent": {
+        "product": "performance-analyzer",
+        "title": "Web Performance Analyzer",
+        "message": "Performance analysis complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$2-5",
+        "timeMinutes": 30,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "Web performance metrics, TTFB measurement, cache headers, resource counting, Core Web Vitals concepts",
+        "buyVsBuild": "Buy $0.15 vs self-dev $2-5 + 30 min + perf expertise. Buy saves 93%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页性能分析；无敏感操作"
+      }
+    },
+    {
+      "id": "structured-data-extractor",
+      "path": "/api/products/structured-data-extractor",
+      "title": "Structured Data Extractor — JSON-LD + Microdata + Schema.org Types",
+      "description": "Extract all structured data from any webpage: JSON-LD blocks (schema.org types like Article, Product, Event, Organization, BreadcrumbList), HTML Microdata (itemtype/itemprop), and Open Graph tags. Returns structured JSON with detected types, properties, and SEO compliance assessment. Essential for SEO auditing and AI content understanding.",
+      "category": "tools",
+      "tags": [
+        "structured-data",
+        "json-ld",
+        "microdata",
+        "schema",
+        "seo",
+        "extraction"
+      ],
+      "priceUsd": 0.15,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "structured-data-extractor",
+        "fields": [
+          "json_ld_blocks",
+          "schema_types",
+          "microdata",
+          "og_tags",
+          "seo_score",
+          "recommendations"
+        ]
+      },
+      "paidContent": {
+        "product": "structured-data-extractor",
+        "title": "Structured Data Extractor",
+        "message": "Structured data extraction complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$3-8",
+        "timeMinutes": 40,
+        "requiresInfrastructure": "none",
+        "requiresExpertise": "JSON-LD parsing, schema.org vocabulary, HTML Microdata, RDFa, Open Graph protocol",
+        "buyVsBuild": "Buy $0.15 vs self-dev $3-8 + 40 min + schema.org expertise. Buy saves 95%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页结构化数据提取；无敏感操作"
+      }
+    },
+    {
+      "id": "complete-website-audit",
+      "path": "/api/products/complete-website-audit",
+      "title": "Complete Website Audit — 10-Tool Deep Analysis with Executive Report",
+      "description": "The most comprehensive website audit available on x402. One call runs 10 analysis tools: security headers (10 checks) + SSL certificate + broken links (top 30) + performance analysis (TTFB/resources/cache/DOM) + structured data (JSON-LD/microdata/OG) + robots.txt + sitemap + DNS records (A/MX/TXT/NS) + content extraction (title/meta/keywords) + redirect chain. Returns unified executive report with overall score (0-100), letter grade, prioritized recommendations, and per-tool breakdown. Takes 15-30 seconds to complete.",
+      "category": "tools",
+      "tags": [
+        "audit",
+        "complete",
+        "workflow",
+        "security",
+        "performance",
+        "seo",
+        "bundle",
+        "enterprise"
+      ],
+      "priceUsd": 5.0,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "complete-website-audit",
+        "fields": [
+          "overall_score",
+          "grade",
+          "security_audit",
+          "ssl_check",
+          "broken_links",
+          "performance",
+          "structured_data",
+          "robots_txt",
+          "dns_records",
+          "content",
+          "redirects",
+          "recommendations",
+          "executive_summary"
+        ]
+      },
+      "paidContent": {
+        "product": "complete-website-audit",
+        "title": "Complete Website Audit",
+        "message": "10-tool comprehensive audit complete. Executive report ready."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$20-50",
+        "timeMinutes": 180,
+        "requiresInfrastructure": "none (but deep integration of 10 tools)",
+        "requiresExpertise": "OWASP security, TLS/X.509, web performance, schema.org, DNS, SEO, HTML parsing, concurrent orchestration",
+        "buyVsBuild": "Buy $5.00 vs self-dev $20-50 + 180 min + 10 skill sets. Buy saves 75%+. No single tool provides this depth."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "整合 10 个公开安全/性能/SEO 工具；无敏感操作"
+      }
+    },
+    {
+      "id": "domain-forensics-report",
+      "path": "/api/products/domain-forensics-report",
+      "title": "Domain Forensics Report — WHOIS + DNS + SSL + Email Auth + Security + Reputation",
+      "description": "Complete domain intelligence and forensics: WHOIS registration (registrar/dates/status via RDAP) + full DNS records (A/AAAA/MX/TXT/NS/CNAME via DoH 4 resolvers) + DNSSEC validation + SSL certificate analysis + email authentication audit (SPF/DKIM/DMARC) + security headers check + DNS leak analysis + IP geolocation + ASN. Returns comprehensive domain profile with risk assessment and recommendations. 8 tools, one report.",
+      "category": "tools",
+      "tags": [
+        "domain",
+        "forensics",
+        "whois",
+        "dns",
+        "ssl",
+        "email",
+        "security",
+        "reputation",
+        "enterprise"
+      ],
+      "priceUsd": 3.0,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "domain-forensics-report",
+        "fields": [
+          "whois",
+          "dns_records",
+          "dnssec",
+          "ssl",
+          "email_auth",
+          "security_headers",
+          "ip_info",
+          "risk_assessment",
+          "recommendations"
+        ]
+      },
+      "paidContent": {
+        "product": "domain-forensics-report",
+        "title": "Domain Forensics Report",
+        "message": "8-tool domain forensics complete."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$15-40",
+        "timeMinutes": 120,
+        "requiresInfrastructure": "DoH queries (4 resolvers) + RDAP",
+        "requiresExpertise": "RDAP, DNSSEC, X.509, SPF/DKIM/DMARC, OWASP, ASN, IP geolocation",
+        "buyVsBuild": "Buy $3.00 vs self-dev $15-40 + 120 min + 8 skill sets. Buy saves 80%+."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开域名情报整合；无敏感操作"
+      }
     }
   ],
   "freePages": {
