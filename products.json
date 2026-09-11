@@ -100,7 +100,7 @@
       "outputExample": {
         "product": "cn-reachability-digest",
         "title": "Mainland China Network Reachability Digest — Dev & AI Infrastructure",
-        "report_id": "cn-reach-digest-2026-09-10",
+        "report_id": "cn-reach-digest-2026-09-11",
         "summary": {
           "domains_probed": 12,
           "ok": 8,
@@ -113,8 +113,8 @@
         "product": "cn-reachability-digest",
         "title": "Mainland China Network Reachability Digest — Dev & AI Infrastructure",
         "report": {
-          "report_id": "cn-reach-digest-2026-09-10",
-          "generated_at": "2026-09-10T01:00:46Z",
+          "report_id": "cn-reach-digest-2026-09-11",
+          "generated_at": "2026-09-11T01:00:41Z",
           "methodology": "HTTPS probe per domain from a single mainland-China consumer-broadband vantage. Direct connection (no interposing proxy). 10s timeout. Raw DNS/TCP/TLS/HTTP outcomes only.",
           "vantage_disclosure": "Mainland-China consumer broadband, single vantage point, best-effort. Results reflect this vantage only and vary by ISP/region/time. No client or vantage network details are collected or exposed.",
           "scope_note": "Connectivity metrics for service planning and network operations. This report provides measurements only and no configuration guidance.",
@@ -129,39 +129,39 @@
               "domain": "pypi.org",
               "status": "ok",
               "http_code": "200",
-              "latency_s": 2.413,
+              "latency_s": 1.11,
               "error_class": null,
-              "tls_s": 0.342
+              "tls_s": 0.265
             },
             {
               "domain": "registry.npmjs.org",
               "status": "ok",
               "http_code": "200",
-              "latency_s": 1.117,
+              "latency_s": 1.075,
               "error_class": null,
-              "tls_s": 0.527
+              "tls_s": 0.49
             },
             {
               "domain": "docker.io",
               "status": "connection_failed",
               "http_code": null,
-              "latency_s": 10.087,
+              "latency_s": 10.074,
               "error_class": "timeout"
             },
             {
               "domain": "huggingface.co",
               "status": "connection_failed",
               "http_code": null,
-              "latency_s": 10.067,
+              "latency_s": 10.057,
               "error_class": "timeout"
             },
             {
               "domain": "github.com",
               "status": "ok",
               "http_code": "200",
-              "latency_s": 0.537,
+              "latency_s": 0.548,
               "error_class": null,
-              "tls_s": 0.142
+              "tls_s": 0.139
             },
             {
               "domain": "raw.githubusercontent.com",
@@ -174,48 +174,48 @@
               "domain": "api.openai.com",
               "status": "connection_failed",
               "http_code": null,
-              "latency_s": 10.083,
+              "latency_s": 10.053,
               "error_class": "timeout"
             },
             {
               "domain": "api.anthropic.com",
               "status": "ok",
               "http_code": "403",
-              "latency_s": 2.661,
+              "latency_s": 0.927,
               "error_class": null,
-              "tls_s": 0.648
+              "tls_s": 0.27
             },
             {
               "domain": "crates.io",
               "status": "ok",
               "http_code": "404",
-              "latency_s": 2.395,
+              "latency_s": 1.332,
               "error_class": null,
-              "tls_s": 0.589
+              "tls_s": 0.267
             },
             {
               "domain": "rubygems.org",
               "status": "ok",
               "http_code": "200",
-              "latency_s": 1.49,
+              "latency_s": 0.508,
               "error_class": null,
-              "tls_s": 0.265
+              "tls_s": 0.111
             },
             {
               "domain": "vercel.com",
               "status": "ok",
               "http_code": "200",
-              "latency_s": 0.616,
+              "latency_s": 1.056,
               "error_class": null,
-              "tls_s": 0.126
+              "tls_s": 0.532
             },
             {
               "domain": "deno.com",
               "status": "ok",
               "http_code": "200",
-              "latency_s": 1.356,
+              "latency_s": 1.39,
               "error_class": null,
-              "tls_s": 0.288
+              "tls_s": 0.319
             }
           ]
         },
@@ -3320,6 +3320,251 @@
         "noSecuritySensitive": true,
         "noPersonalData": true,
         "note": "文本摘要；输入不存储"
+      }
+    },
+    {
+      "id": "js-render",
+      "path": "/api/products/js-render",
+      "title": "JavaScript Page Renderer — Full DOM Render via Headless Chrome",
+      "description": "Render any URL with a real headless Chrome browser. Returns full rendered HTML (after JS execution), page title, meta tags, H1, body text, script/style/image counts, load time, and final URL. Essential for SPAs, React/Vue/Angular apps, and any page where content loads dynamically. Cloudflare Workers can't do this — requires real browser.",
+      "category": "browser",
+      "tags": [
+        "render",
+        "javascript",
+        "dom",
+        "headless",
+        "chrome",
+        "spa"
+      ],
+      "priceUsd": 0.05,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "js-render",
+        "title": "Page Title",
+        "loadTimeMs": 3200,
+        "htmlLength": 45000,
+        "meta": {
+          "description": "...",
+          "h1": "..."
+        }
+      },
+      "paidContent": {
+        "product": "js-render",
+        "title": "JS Page Render",
+        "message": "Page rendered with headless Chrome."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$10-30",
+        "timeMinutes": 120,
+        "requiresInfrastructure": "Headless Chrome + Puppeteer + persistent server",
+        "requiresExpertise": "Browser automation, Puppeteer, page rendering, SPA handling",
+        "buyVsBuild": "Buy $0.05 vs self-hosting Chrome + Puppeteer ($50+/month server). Workers can't do this. Unique capability."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页渲染；无敏感操作"
+      }
+    },
+    {
+      "id": "web-screenshot",
+      "path": "/api/products/web-screenshot",
+      "title": "Website Screenshot — Full Page Capture via Headless Chrome",
+      "description": "Take a full-page screenshot of any URL using headless Chrome. Returns PNG image. Captures the entire page including content below the fold. Perfect for visual monitoring, compliance records, design review. Cloudflare Workers can't take screenshots — requires real browser.",
+      "category": "browser",
+      "tags": [
+        "screenshot",
+        "image",
+        "capture",
+        "headless",
+        "chrome",
+        "visual"
+      ],
+      "priceUsd": 0.1,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "web-screenshot",
+        "format": "png",
+        "size": "1920x1080"
+      },
+      "paidContent": {
+        "product": "web-screenshot",
+        "title": "Website Screenshot",
+        "message": "Screenshot captured."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$10-30",
+        "timeMinutes": 90,
+        "requiresInfrastructure": "Headless Chrome + screenshot pipeline",
+        "requiresExpertise": "Puppeteer screenshot, viewport settings, fullPage capture",
+        "buyVsBuild": "Buy $0.10 vs self-hosting Chrome + screenshot service. Workers can't do this."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页截图；无敏感操作"
+      }
+    },
+    {
+      "id": "web-to-pdf",
+      "path": "/api/products/web-to-pdf",
+      "title": "Web to PDF Converter — Headless Chrome PDF Generation",
+      "description": "Convert any URL to a PDF document using headless Chrome's built-in PDF engine. Returns A4 PDF with background printing. Perfect for archiving web pages, generating reports, creating printable versions. Cloudflare Workers can't generate PDFs.",
+      "category": "browser",
+      "tags": [
+        "pdf",
+        "convert",
+        "headless",
+        "chrome",
+        "document",
+        "archive"
+      ],
+      "priceUsd": 0.1,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "web-to-pdf",
+        "format": "A4",
+        "pages": 3
+      },
+      "paidContent": {
+        "product": "web-to-pdf",
+        "title": "Web to PDF",
+        "message": "PDF generated."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$10-30",
+        "timeMinutes": 90,
+        "requiresInfrastructure": "Headless Chrome + PDF engine",
+        "requiresExpertise": "Chrome PDF API, page formatting, margin control",
+        "buyVsBuild": "Buy $0.10 vs self-hosting Chrome + PDF service. Workers can't do this."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页转PDF；无敏感操作"
+      }
+    },
+    {
+      "id": "content-extract-pro",
+      "path": "/api/products/content-extract-pro",
+      "title": "Pro Content Extractor — Structured Data from JS-Rendered Pages",
+      "description": "Extract structured content from any URL after full JavaScript rendering. Returns: page text, HTML, title, all headings (H1-H3), links (text+href, up to 50), images (src+alt, up to 30), meta tags (description, keywords, OG). Perfect for content analysis, SEO auditing, data extraction from SPAs.",
+      "category": "browser",
+      "tags": [
+        "extract",
+        "content",
+        "structured",
+        "headless",
+        "seo",
+        "spa"
+      ],
+      "priceUsd": 0.05,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "content-extract-pro",
+        "title": "...",
+        "headings": {
+          "h1": [
+            "..."
+          ],
+          "h2": [
+            "..."
+          ]
+        },
+        "links": [
+          {
+            "text": "...",
+            "href": "..."
+          }
+        ],
+        "images": [
+          {
+            "src": "...",
+            "alt": "..."
+          }
+        ]
+      },
+      "paidContent": {
+        "product": "content-extract-pro",
+        "title": "Pro Content Extract",
+        "message": "Content extracted from rendered page."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$5-15",
+        "timeMinutes": 60,
+        "requiresInfrastructure": "Headless Chrome + content extraction",
+        "requiresExpertise": "DOM parsing, content extraction, SPA handling",
+        "buyVsBuild": "Buy $0.05 vs self-hosting Chrome + extraction logic. Workers can't render JS."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页内容提取；无敏感操作"
+      }
+    },
+    {
+      "id": "link-check-pro",
+      "path": "/api/products/link-check-pro",
+      "title": "Pro Link Checker — Render Page Then Verify All Links",
+      "description": "Render any URL with headless Chrome (after JS execution), extract all links, then HEAD-check each one (up to 20). Returns: total links, broken count, broken URLs with status codes. Goes beyond simple broken-links-check by rendering JS-first (catches links added dynamically by frameworks).",
+      "category": "browser",
+      "tags": [
+        "links",
+        "broken",
+        "check",
+        "headless",
+        "render",
+        "spa"
+      ],
+      "priceUsd": 0.05,
+      "license": "personal-use",
+      "outputExample": {
+        "product": "link-check-pro",
+        "totalLinks": 15,
+        "brokenCount": 2,
+        "broken": [
+          {
+            "url": "...",
+            "status": 404
+          }
+        ]
+      },
+      "paidContent": {
+        "product": "link-check-pro",
+        "title": "Pro Link Check",
+        "message": "Links checked from rendered page."
+      },
+      "selfDevelopCost": {
+        "tokenCostUsd": "$5-15",
+        "timeMinutes": 60,
+        "requiresInfrastructure": "Headless Chrome + link checking",
+        "requiresExpertise": "Puppeteer, link extraction, HTTP HEAD checks",
+        "buyVsBuild": "Buy $0.05 vs self-hosting Chrome + link checker. Catches JS-rendered links."
+      },
+      "compliance": {
+        "reviewed": true,
+        "reviewedAt": "2026-09-11",
+        "noIllegal": true,
+        "noDiscrimination": true,
+        "noSecuritySensitive": true,
+        "noPersonalData": true,
+        "note": "公开网页链接检查；无敏感操作"
       }
     }
   ]
