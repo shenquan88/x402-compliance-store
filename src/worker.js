@@ -2318,6 +2318,86 @@ async function handlePaid(request, path, product, env, ctx) {
         }
       }
 
+      // js-render: full DOM render via headless Chrome
+      if (product.id === "js-render") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const headlessResp = await fetch(`${env.HEADLESS_URL}/render`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: targetUrl, waitUntil: "networkidle2", timeout: 15000 }), signal: AbortSignal.timeout(30000) });
+          const data = await headlessResp.json();
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, ...data, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: "Headless render failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // web-screenshot: full page screenshot via headless Chrome
+      if (product.id === "web-screenshot") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        const fullPage = (new URL(request.url).searchParams.get("full") || "true") !== "false";
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const headlessResp = await fetch(`${env.HEADLESS_URL}/screenshot`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: targetUrl, fullPage, width: 1920, height: 1080 }), signal: AbortSignal.timeout(45000) });
+          if (!headlessResp.ok) { throw new Error(`Headless returned ${headlessResp.status}`); }
+          const imgBuffer = await headlessResp.arrayBuffer();
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(imgBuffer, { status: 200, headers: { "Content-Type": "image/png", "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded, "X-Product": "web-screenshot", "X-Meta": JSON.stringify(meta).substring(0, 200) } });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: "Screenshot failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // web-to-pdf: convert URL to PDF via headless Chrome
+      if (product.id === "web-to-pdf") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const headlessResp = await fetch(`${env.HEADLESS_URL}/pdf`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: targetUrl, format: "A4", printBackground: true }), signal: AbortSignal.timeout(45000) });
+          if (!headlessResp.ok) { throw new Error(`Headless returned ${headlessResp.status}`); }
+          const pdfBuffer = await headlessResp.arrayBuffer();
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(pdfBuffer, { status: 200, headers: { "Content-Type": "application/pdf", "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded, "X-Product": "web-to-pdf", "X-Meta": JSON.stringify(meta).substring(0, 200) } });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: "PDF generation failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // content-extract-pro: structured content from JS-rendered page
+      if (product.id === "content-extract-pro") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        const selector = (new URL(request.url).searchParams.get("selector") || "body").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const headlessResp = await fetch(`${env.HEADLESS_URL}/extract`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: targetUrl, waitUntil: "networkidle2", selector }), signal: AbortSignal.timeout(30000) });
+          const data = await headlessResp.json();
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, ...data, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: "Content extraction failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // link-check-pro: render page then verify all links
+      if (product.id === "link-check-pro") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        const maxLinks = parseInt(new URL(request.url).searchParams.get("max") || "20");
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const headlessResp = await fetch(`${env.HEADLESS_URL}/link-check`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: targetUrl, maxLinks, timeout: 10000 }), signal: AbortSignal.timeout(60000) });
+          const data = await headlessResp.json();
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, ...data, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: "Link check failed: " + String(e).substring(0, 150), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
       return new Response(
         JSON.stringify({ ...product.paidContent, receipt }, null, 2),
         { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) }
@@ -2459,7 +2539,7 @@ ${urls.map((u) => `  <url><loc>${origin}${u}</loc></url>`).join("\n")}
         name_for_human: "web4shop — x402 Paid API Services",
         name_for_model: "web4shop_x402_services",
         description_for_human: "Pay-per-call API services: mainland-China vantage connectivity checks, CN/US infrastructure snapshots, x402 endpoint compliance audits (8-point basic + 14-point pro), cross-border API probing, DNS resolution divergence checks, cloud infrastructure reachability daily. Settled in USDC on Base via x402.",
-        description_for_model: "x402 protocol paid API catalog. 55 products (47 single + 8 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01, redirect-tracer $0.05. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, password-strength $0.02, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, content-type-detector $0.02, openapi-validate $0.30. Auth: jwt-decode $0.02. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05, ip-info $0.05, cron-parser $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. AI: llm-generate .01, llm-generate-pro .05, llm-embed .001, llm-sentiment .005, llm-summarize .02. Pay USDC on Base via x402 v2.",
+        description_for_model: "x402 protocol paid API catalog. 60 products (52 single + 8 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01, redirect-tracer $0.05. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, password-strength $0.02, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, content-type-detector $0.02, openapi-validate $0.30. Auth: jwt-decode $0.02. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05, ip-info $0.05, cron-parser $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. AI: llm-generate .01, llm-generate-pro .05, llm-embed .001, llm-sentiment .005, llm-summarize .02. Browser: js-render .05, web-screenshot .10, web-to-pdf .10, content-extract-pro .05, link-check-pro .05. Pay USDC on Base via x402 v2.",
         api: { type: "openapi", url: `${origin}/openapi.json`, is_user_authenticated: false },
         auth: { type: "x402", protocol: "x402/v2", network: "base", asset: "USDC" },
         contact_email: "use on-chain memo via /support",
