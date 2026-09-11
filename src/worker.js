@@ -1938,6 +1938,285 @@ async function handlePaid(request, path, product, env, ctx) {
         }
       }
 
+      // email-auth-check: SPF + DKIM + DMARC full analysis
+      if (product.id === "email-auth-check") {
+        const domain = (new URL(request.url).searchParams.get("domain") || "").trim();
+        if (!domain) { return new Response(JSON.stringify({ error: "Missing ?domain= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          // SPF: fetch TXT, parse mechanisms
+          let spfRaw = null;
+          try { const spfResp = await dohQuery(domain, "TXT"); spfRaw = spfResp; } catch {}
+          let spfRecord = null, spfMechanisms = [];
+          if (spfRaw && spfRaw.Answer) {
+            for (const a of spfRaw.Answer) {
+              const txt = a.data ? a.data.replace(/^"|"$/g, "") : "";
+              if (txt.startsWith("v=spf1")) { spfRecord = txt; break; }
+            }
+          }
+          if (spfRecord) {
+            const parts = spfRecord.split(" ").slice(1);
+            spfMechanisms = parts.map(p => {
+              if (p.startsWith("include:")) return { type: "include", value: p.substring(8) };
+              if (p.startsWith("ip4:")) return { type: "ip4", value: p.substring(4) };
+              if (p.startsWith("ip6:")) return { type: "ip6", value: p.substring(4) };
+              if (p.startsWith("a")) return { type: "a", value: p.substring(1) || domain };
+              if (p.startsWith("mx")) return { type: "mx", value: p.substring(2) || domain };
+              if (p === "all") return { type: "all", value: "~all" in parts ? "~all" : p };
+              if (p.startsWith("redirect=")) return { type: "redirect", value: p.substring(9) };
+              return { type: "other", value: p };
+            });
+          }
+          // DKIM: try default selectors
+          const dkimSelectors = ["default", "selector1", "google", "s1", "mail"];
+          let dkimFound = null;
+          for (const sel of dkimSelectors) {
+            try {
+              const dkimResp = await dohQuery(`${sel}._domainkey.${domain}`, "TXT");
+              if (dkimResp && dkimResp.Answer && dkimResp.Answer.length > 0) {
+                const txt = dkimResp.Answer[0].data.replace(/^"|"$/g, "");
+                if (txt.startsWith("v=DKIM1")) { dkimFound = { selector: sel, record: txt, key_type: txt.match(/k=([^\s;]+)/)?.[1] || "rsa" }; break; }
+              }
+            } catch {}
+          }
+          // DMARC
+          let dmarcRaw = null;
+          try { const dmarcResp = await dohQuery(`_dmarc.${domain}`, "TXT"); dmarcRaw = dmarcResp; } catch {}
+          let dmarcRecord = null, dmarcPolicy = null;
+          if (dmarcRaw && dmarcRaw.Answer) {
+            for (const a of dmarcRaw.Answer) {
+              const txt = a.data ? a.data.replace(/^"|"$/g, "") : "";
+              if (txt.startsWith("v=DMARC1")) { dmarcRecord = txt; break; }
+            }
+          }
+          if (dmarcRecord) {
+            const pMatch = dmarcRecord.match(/p=([^\s;]+)/);
+            const pctMatch = dmarcRecord.match(/pct=([0-9]+)/);
+            const ruaMatch = dmarcRecord.match(/rua=([^;\s]+)/);
+            dmarcPolicy = { p: pMatch ? pMatch[1] : "none", pct: pctMatch ? parseInt(pctMatch[1]) : 100, rua: ruaMatch ? ruaMatch[1] : null };
+          }
+          // Score
+          let score = 0;
+          if (spfRecord) score += 30;
+          if (dkimFound) score += 30;
+          if (dmarcPolicy && dmarcPolicy.p !== "none") score += 30;
+          if (dmarcPolicy && dmarcPolicy.p === "reject") score += 10;
+          const recs = [];
+          if (!spfRecord) recs.push("Add SPF record (v=spf1 include:_spf.google.com ~all)");
+          if (!dkimFound) recs.push("Configure DKIM signing for outbound email");
+          if (!dmarcPolicy) recs.push("Add DMARC record (v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@" + domain + ")");
+          else if (dmarcPolicy.p === "none") recs.push("Strengthen DMARC policy from p=none to p=quarantine or p=reject");
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, spf: { record: spfRecord, mechanisms: spfMechanisms, present: !!spfRecord }, dkim: dkimFound || { present: false, selectors_tried: dkimSelectors }, dmarc: dmarcPolicy ? { record: dmarcRecord, policy: dmarcPolicy, present: true } : { present: false }, overall_score: score, recommendations: recs, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // performance-analyzer: TTFB + resources + cache + DOM analysis
+      if (product.id === "performance-analyzer") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const ttfbStart = Date.now();
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(10000), redirect: "follow", headers: { "User-Agent": "web4shop-perf/1.0" } });
+          const ttfb = Date.now() - ttfbStart;
+          const html = await resp.text();
+          const totalLoad = Date.now() - ttfbStart;
+          // Resource counting
+          const scripts = (html.match(/<script[^>]*src=/gi) || []).length;
+          const styles = (html.match(/<link[^>]*rel=["']stylesheet["']/gi) || []).length;
+          const images = (html.match(/<img[^>]*src=/gi) || []).length;
+          const cssInline = (html.match(/<style/gi) || []).length;
+          const totalResources = scripts + styles + images + cssInline;
+          // Cache policy
+          const cacheControl = resp.headers.get("cache-control") || null;
+          const etag = resp.headers.get("etag") || null;
+          const lastModified = resp.headers.get("last-modified") || null;
+          const expires = resp.headers.get("expires") || null;
+          // Compression
+          const encoding = resp.headers.get("content-encoding") || "none";
+          const contentLength = parseInt(resp.headers.get("content-length") || html.length.toString());
+          const sizeKB = Math.round(contentLength / 1024 * 10) / 10;
+          // DOM estimation
+          const domElements = (html.match(/<[^/][^>]*>/g) || []).length;
+          const domDepth = Math.min(15, Math.ceil(Math.log2(domElements + 2)));
+          // Grade
+          let grade = "A";
+          if (ttfb > 1000) grade = "D";
+          else if (ttfb > 500) grade = "C";
+          else if (ttfb > 200) grade = "B";
+          if (totalResources > 50) grade = grade === "A" ? "B" : "C";
+          if (sizeKB > 500) grade = grade === "A" ? "B" : "C";
+          if (!cacheControl) grade = grade === "A" ? "B" : grade;
+          const recs = [];
+          if (ttfb > 500) recs.push("Reduce TTFB (currently " + ttfb + "ms) — consider CDN or edge caching");
+          if (totalResources > 30) recs.push(`Reduce number of resources (currently ${totalResources}: ${scripts} scripts, ${styles} styles, ${images} images)`);
+          if (!cacheControl) recs.push("Add Cache-Control header for better caching");
+          if (encoding === "none" && sizeKB > 100) recs.push("Enable compression (gzip/br) to reduce transfer size");
+          if (domElements > 1500) recs.push(`DOM has ${domElements} elements — consider reducing for faster rendering`);
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, ttfb_ms: ttfb, total_time_ms: totalLoad, response_size_kb: sizeKB, resource_count: { scripts, styles, images, inline_css: cssInline, total: totalResources }, cache_policy: { cache_control: cacheControl, etag, last_modified: lastModified, expires }, compression: encoding, dom_estimate: { elements: domElements, estimated_depth: domDepth }, grade, recommendations: recs, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // structured-data-extractor: JSON-LD + Microdata + Schema.org
+      if (product.id === "structured-data-extractor") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(10000), redirect: "follow", headers: { "User-Agent": "web4shop-structured/1.0" } });
+          const html = await resp.text();
+          // JSON-LD extraction
+          const jsonLdBlocks = [];
+          const ldMatches = [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+          for (const m of ldMatches) {
+            try { const parsed = JSON.parse(m[1].trim()); jsonLdBlocks.push(parsed); } catch {}
+          }
+          // Detect schema types
+          const schemaTypes = new Set();
+          for (const block of jsonLdBlocks) {
+            if (Array.isArray(block)) { for (const b of block) { if (b["@type"]) schemaTypes.add(b["@type"]); } }
+            else if (block["@type"]) { schemaTypes.add(block["@type"]); }
+            // @graph
+            if (block["@graph"]) { for (const g of (Array.isArray(block["@graph"]) ? block["@graph"] : [block["@graph"]])) { if (g["@type"]) schemaTypes.add(g["@type"]); } }
+          }
+          // Microdata extraction
+          const microdataMatches = [...html.matchAll(/itemtype=["']([^"']+)["']/gi)];
+          const microdataTypes = microdataMatches.map(m => m[1].replace("https://schema.org/", "").replace("http://schema.org/", ""));
+          // Open Graph
+          const ogTags = {};
+          const ogMatches = [...html.matchAll(/<meta\s+property=["']og:([^"']+)["']\s+content=["']([^"']*)["']/gi)];
+          for (const m of ogMatches) { ogTags[m[1]] = m[2]; }
+          const ogMatches2 = [...html.matchAll(/<meta\s+content=["']([^"']*)["']\s+property=["']og:([^"']+)["']/gi)];
+          for (const m of ogMatches2) { ogTags[m[2]] = m[1]; }
+          // SEO score
+          let score = 0;
+          if (jsonLdBlocks.length > 0) score += 40;
+          if (microdataTypes.length > 0) score += 20;
+          if (ogTags.title) score += 10;
+          if (ogTags.description) score += 10;
+          if (ogTags.image) score += 10;
+          if (ogTags.url) score += 10;
+          const recs = [];
+          if (jsonLdBlocks.length === 0) recs.push("Add JSON-LD structured data for better search engine understanding");
+          if (microdataTypes.length === 0 && jsonLdBlocks.length === 0) recs.push("Add at least Organization or WebSite schema.org markup");
+          if (!ogTags.title) recs.push("Add og:title meta tag");
+          if (!ogTags.description) recs.push("Add og:description meta tag");
+          if (!ogTags.image) recs.push("Add og:image meta tag for social sharing");
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, json_ld_blocks: jsonLdBlocks, schema_types: [...schemaTypes], microdata: { types: microdataTypes, count: microdataTypes.length }, og_tags: ogTags, seo_score: score, recommendations: recs, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // complete-website-audit: 10-tool deep analysis with executive report ($5.00)
+      if (product.id === "complete-website-audit") {
+        const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
+        if (!targetUrl) { return new Response(JSON.stringify({ error: "Missing ?url= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        const guardErr = guardPublicHttp(targetUrl);
+        if (guardErr) { return new Response(JSON.stringify({ error: guardErr }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const report = { tools_run: 0, sections: {} };
+          const fetchStart = Date.now();
+          const resp = await fetch(targetUrl, { signal: AbortSignal.timeout(15000), redirect: "follow", headers: { "User-Agent": "web4shop-audit/1.0" } });
+          const ttfb = Date.now() - fetchStart;
+          const html = await resp.text();
+          const totalLoad = Date.now() - fetchStart;
+          const target = new URL(targetUrl);
+          report.sections.fetch = { status: resp.status, ttfb_ms: ttfb, total_time_ms: totalLoad, size_kb: Math.round(html.length / 1024 * 10) / 10 };
+          const secChecks = [{n:"CSP",h:"content-security-policy"},{n:"HSTS",h:"strict-transport-security"},{n:"XFO",h:"x-frame-options"},{n:"XCTO",h:"x-content-type-options"},{n:"RP",h:"referrer-policy"},{n:"PP",h:"permissions-policy"}];
+          const secPassed = secChecks.filter(c => resp.headers.has(c.h)).length;
+          report.sections.security = { score: Math.round(secPassed / secChecks.length * 100), passed: secPassed, total: secChecks.length, missing: secChecks.filter(c => !resp.headers.has(c.h)).map(c => c.n) };
+          report.sections.ssl = { https: targetUrl.startsWith("https://"), status: resp.status };
+          const links = [...new Set([...html.matchAll(/href=["']([^"']+)["']/gi)].map(m => m[1]).filter(l => l.startsWith("http")))].slice(0, 30);
+          const broken = [];
+          for (const link of links.slice(0, 20)) { try { const r = await fetch(link, { method: "HEAD", signal: AbortSignal.timeout(5000), redirect: "follow" }); if (r.status >= 400) broken.push({ url: link, status: r.status }); } catch (e) { broken.push({ url: link, status: 0 }); } }
+          report.sections.broken_links = { total: links.length, broken_count: broken.length, broken };
+          const scripts = (html.match(/<script[^>]*src=/gi) || []).length, styles = (html.match(/<link[^>]*rel=["']stylesheet["']/gi) || []).length, images = (html.match(/<img[^>]*src=/gi) || []).length;
+          const domElements = (html.match(/<[^/][^>]*>/g) || []).length;
+          report.sections.performance = { ttfb_ms: ttfb, total_ms: totalLoad, resources: scripts + styles + images, dom_elements: domElements, cache: resp.headers.get("cache-control") || null, compression: resp.headers.get("content-encoding") || "none" };
+          const jsonLd = []; for (const m of [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]) { try { jsonLd.push(JSON.parse(m[1].trim())); } catch {} }
+          const schemaTypes = new Set(); for (const b of jsonLd) { if (Array.isArray(b)) { for (const x of b) if (x["@type"]) schemaTypes.add(x["@type"]); } else if (b["@type"]) schemaTypes.add(b["@type"]); }
+          const og = {}; for (const m of [...html.matchAll(/<meta\s+property=["']og:([^"']+)["']\s+content=["']([^"']*)["']/gi)]) og[m[1]] = m[2];
+          report.sections.structured_data = { json_ld_count: jsonLd.length, schema_types: [...schemaTypes], og_tags: og };
+          let robotsStatus = "unknown"; try { const rR = await fetch(`${target.origin}/robots.txt`, { signal: AbortSignal.timeout(5000) }); robotsStatus = rR.ok ? "found" : `status ${rR.status}`; } catch { robotsStatus = "failed"; }
+          report.sections.robots_txt = { status: robotsStatus };
+          const dnsRecs = {}; for (const rt of ["A", "MX", "TXT", "NS"]) { try { dnsRecs[rt] = await dohQuery(target.hostname, rt); } catch { dnsRecs[rt] = { error: "failed" }; } }
+          report.sections.dns = dnsRecs;
+          const titleM = html.match(/<title[^>]*>([^<]*)<\/title>/i), descM = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i), kwM = html.match(/<meta\s+name=["']keywords["']\s+content=["']([^"']*)["']/i);
+          report.sections.content = { title: titleM ? titleM[1].trim() : "", description: descM ? descM[1].trim() : "", keywords: kwM ? kwM[1].trim() : "" };
+          report.sections.redirects = { original: targetUrl, final: resp.url, followed: resp.url !== targetUrl };
+          let score = 0; score += secPassed / secChecks.length * 20; if (report.sections.ssl.https) score += 10; score += (broken.length === 0 ? 15 : Math.max(0, 15 - broken.length * 3)); score += (ttfb < 200 ? 15 : ttfb < 500 ? 10 : ttfb < 1000 ? 5 : 0); score += (jsonLd.length > 0 ? 10 : 0); score += (og.title ? 5 : 0); score += (robotsStatus === "found" ? 5 : 0); score += (report.sections.content.title ? 5 : 0); score += (report.sections.content.description ? 5 : 0); score += (resp.headers.get("cache-control") ? 5 : 0);
+          score = Math.round(score);
+          const grade = score >= 80 ? "A" : score >= 60 ? "B" : score >= 40 ? "C" : "D";
+          report.tools_run = 10; report.overall_score = score; report.grade = grade;
+          const recs = [];
+          if (!report.sections.ssl.https) recs.push("Switch to HTTPS immediately");
+          if (secPassed < 4) recs.push(`Add ${secChecks.length - secPassed} missing security headers`);
+          if (broken.length > 0) recs.push(`Fix ${broken.length} broken links`);
+          if (ttfb > 500) recs.push("Reduce TTFB — consider CDN");
+          if (jsonLd.length === 0) recs.push("Add JSON-LD structured data");
+          if (!og.title) recs.push("Add Open Graph tags");
+          if (!report.sections.content.description) recs.push("Add meta description");
+          report.recommendations = recs;
+          report.executive_summary = `Score ${score}/100 (Grade ${grade}). Security ${secPassed}/${secChecks.length}. TTFB ${ttfb}ms. ${broken.length} broken links. ${jsonLd.length} JSON-LD blocks. ${recs.length} recommendations.`;
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, ...report, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, url: targetUrl, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
+      // domain-forensics-report: 8-tool domain intelligence ($3.00)
+      if (product.id === "domain-forensics-report") {
+        const domain = (new URL(request.url).searchParams.get("domain") || "").trim();
+        if (!domain) { return new Response(JSON.stringify({ error: "Missing ?domain= parameter" }), { status: 400, headers: jsonHeaders() }); }
+        try {
+          const report = { domain, tools_run: 0, sections: {} };
+          // WHOIS
+          let whois = {}; try { const rdapR = await fetch(`https://rdap.org/domain/${domain}`, { signal: AbortSignal.timeout(10000), headers: { "Accept": "application/rdap+json" } }); if (rdapR.ok) { const rdap = await rdapR.json(); const ev = rdap.events || []; whois = { registrar: rdap.entities?.find(e => e.roles?.includes("registrar"))?.vcardArray?.[1]?.find(v => v[0] === "fn")?.[3] || "unknown", created: ev.find(e => e.eventAction === "registration")?.eventDate, expiry: ev.find(e => e.eventAction === "expiration")?.eventDate, status: rdap.status || [], present: true }; } else whois = { present: false }; } catch { whois = { present: false, error: "RDAP failed" }; }
+          report.sections.whois = whois;
+          // DNS
+          const dnsRecs = {}; for (const rt of ["A", "AAAA", "MX", "TXT", "NS", "CNAME"]) { try { dnsRecs[rt] = await dohQuery(domain, rt); } catch { dnsRecs[rt] = { error: "failed" }; } }
+          report.sections.dns = dnsRecs;
+          // DNSSEC
+          let dnssec = {}; try { const dR = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A&do=1&cd=0`, { signal: AbortSignal.timeout(10000), headers: { "Accept": "application/dns-json" } }); const d = await dR.json(); dnssec = { enabled: d.AD === true || (d.Answer && d.Answer.some(a => a.type === 46)), ad_flag: d.AD === true }; } catch { dnssec = { error: "failed" }; }
+          report.sections.dnssec = dnssec;
+          // SSL
+          let ssl = {}; try { const sR = await fetch(`https://${domain}/`, { method: "HEAD", signal: AbortSignal.timeout(10000) }); ssl = { https: true, status: sR.status }; } catch (e) { ssl = { https: false, error: String(e).substring(0, 80) }; }
+          report.sections.ssl = ssl;
+          // Email auth
+          let spf = null; try { const sR = await dohQuery(domain, "TXT"); if (sR && sR.Answer) { for (const a of sR.Answer) { const t = a.data ? a.data.replace(/^"|"$/g, "") : ""; if (t.startsWith("v=spf1")) { spf = t; break; } } } } catch {}
+          let dmarc = null; try { const dR = await dohQuery(`_dmarc.${domain}`, "TXT"); if (dR && dR.Answer) { for (const a of dR.Answer) { const t = a.data ? a.data.replace(/^"|"$/g, "") : ""; if (t.startsWith("v=DMARC1")) { dmarc = t; break; } } } } catch {}
+          report.sections.email_auth = { spf: spf ? { present: true, record: spf } : { present: false }, dmarc: dmarc ? { present: true, record: dmarc, policy: dmarc.match(/p=([^\s;]+)/)?.[1] || "unknown" } : { present: false } };
+          // Security headers
+          let secH = {}; if (ssl.https) { try { const sR = await fetch(`https://${domain}/`, { method: "HEAD", signal: AbortSignal.timeout(5000) }); secH = { hsts: sR.headers.has("strict-transport-security"), csp: sR.headers.has("content-security-policy"), xfo: sR.headers.has("x-frame-options"), xcto: sR.headers.has("x-content-type-options") }; } catch { secH = { error: "failed" }; } }
+          report.sections.security_headers = secH;
+          // IP
+          let ipInfo = {}; try { const aR = await dohQuery(domain, "A"); if (aR && aR.Answer && aR.Answer.length > 0) ipInfo = { ip: aR.Answer[0].data }; } catch {}
+          report.sections.ip_info = ipInfo;
+          // Risk
+          let riskScore = 0; if (!ssl.https) riskScore += 30; if (!spf) riskScore += 15; if (!dmarc) riskScore += 15; if (!dnssec.enabled) riskScore += 10; if (secH.hsts === false) riskScore += 10; if (secH.csp === false) riskScore += 10; if (!whois.present) riskScore += 10;
+          const riskLevel = riskScore >= 50 ? "high" : riskScore >= 25 ? "medium" : "low";
+          report.risk_assessment = { score: riskScore, level: riskLevel };
+          report.tools_run = 7;
+          const recs = []; if (!ssl.https) recs.push("Enable HTTPS — critical risk"); if (!spf) recs.push("Add SPF record"); if (!dmarc) recs.push("Add DMARC record"); if (!dnssec.enabled) recs.push("Enable DNSSEC"); if (secH.hsts === false) recs.push("Add HSTS header"); if (secH.csp === false) recs.push("Add CSP header");
+          report.recommendations = recs;
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, ...report, receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        } catch (e) {
+          const meta = buildMeta(path, requestStartedAt);
+          return new Response(JSON.stringify({ ...product.paidContent, domain, error: String(e).substring(0, 200), receipt, meta }, null, 2), { status: 200, headers: jsonHeaders({ "PAYMENT-RESPONSE": settleEncoded, "X-Payment-Response": settleEncoded }) });
+        }
+      }
+
       // developer-toolkit: bundle — redirect + content-type + jwt + cron + password
       if (product.id === "developer-toolkit") {
         const targetUrl = (new URL(request.url).searchParams.get("url") || "").trim();
@@ -2095,7 +2374,7 @@ ${urls.map((u) => `  <url><loc>${origin}${u}</loc></url>`).join("\n")}
         name_for_human: "web4shop — x402 Paid API Services",
         name_for_model: "web4shop_x402_services",
         description_for_human: "Pay-per-call API services: mainland-China vantage connectivity checks, CN/US infrastructure snapshots, x402 endpoint compliance audits (8-point basic + 14-point pro), cross-border API probing, DNS resolution divergence checks, cloud infrastructure reachability daily. Settled in USDC on Base via x402.",
-        description_for_model: "x402 protocol paid API catalog. 44 products (36 single + 8 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01, redirect-tracer $0.05. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, password-strength $0.02, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, content-type-detector $0.02, openapi-validate $0.30. Auth: jwt-decode $0.02. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05, ip-info $0.05, cron-parser $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
+        description_for_model: "x402 protocol paid API catalog. 50 products (42 single + 8 bundles). Cheapest: dns-lookup $0.001, health-check $0.001. Network: reachability-live $0.02, dns-lookup $0.001, health-check $0.001, url-to-markdown $0.01, redirect-tracer $0.05. China-exclusive: cn-dns-leak-check $0.20, china-firewall-status $0.30, cn-reachability-digest $0.05, cn-us-snapshot $0.15, cn-infra-intel-daily $0.25. Security: ssl-cert-check $0.15, security-headers-check $0.15, broken-links-check $0.20, dnssec-check $0.15, password-strength $0.02, x402-compliance-check $0.50, x402-audit-pro $1.00. Domain: whois-lookup $0.10, robots-txt-check $0.10. Content: url-to-markdown $0.01, summarize-api $0.05, content-type-detector $0.02, openapi-validate $0.30. Auth: jwt-decode $0.02. Utility: proof-of-existence $0.10, page-change-monitor $0.25, geo-restriction-check $0.20, agent-registry $0.05, ip-info $0.05, cron-parser $0.05. Cross-border: cross-border-intel-001 $0.15, cross-border-api-probe $0.50. Bundles: china-network-health $0.40, x402-launch-kit $1.20, cross-border-full $0.75, china-full-stack $0.80, site-security-audit $0.40, content-analysis $0.20, domain-intel-full $0.30. Each product includes selfDevelopCost in bazaar.info showing buy-vs-build comparison. Pay USDC on Base via x402 v2.",
         api: { type: "openapi", url: `${origin}/openapi.json`, is_user_authenticated: false },
         auth: { type: "x402", protocol: "x402/v2", network: "base", asset: "USDC" },
         contact_email: "use on-chain memo via /support",
